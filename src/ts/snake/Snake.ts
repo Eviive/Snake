@@ -1,13 +1,19 @@
 import { LevelFile } from "../types/game.js";
+import { Shape, Circle } from "../shapes/index.js";
 
 export class Snake {
 	
-	static #isBuilding = false;
+	static #isBuilding: boolean = false;
 	
 	#canvas: HTMLCanvasElement;
 	#ctx: CanvasRenderingContext2D;
 	#level: LevelFile;
-	#interval?: number;
+	
+	#frame?: number;
+	#then: DOMHighResTimeStamp | null = null;
+	#now: DOMHighResTimeStamp | null = null;
+
+	#shapes: Shape[] = [new Circle(50, 50, "#FFFFFF", 50), new Circle(50, 175, "#FF0000", 50)];
 	
 	constructor(level: LevelFile) {
 		if (!Snake.#isBuilding) {
@@ -79,12 +85,27 @@ export class Snake {
 		this.#canvas.height = canvasHeight;
 	}
 	
-	#render() {
-		console.log("Snake.render()");
+	#render(time: DOMHighResTimeStamp) {
+		this.#now = time;
+		const delta = (this.#now - (this.#then ?? 0)) / 1000;
+		this.#then = this.#now;
+		
+		this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+		
+		for (const s of this.#shapes) {
+			s.update(delta * this.#level.speed, this.#canvas.width - 50);
+			
+			s.draw(this.#ctx);
+		}
+
+		this.#frame = requestAnimationFrame(time => this.#render(time));
 	}
 
 	run() {
-		this.#interval = setInterval(() => this.#render(), this.#level.delay);
+		requestAnimationFrame(time => {
+			this.#then = time;
+			this.#render(time);
+		});
 	}
 
 }
