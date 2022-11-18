@@ -17,22 +17,27 @@
 </head>
 <body>
 	<div id="root"></div>
+	
 	<template id="home-template">
-		<header>
-			<h1>Snake</h1>
-		</header>
-		<main>
-			<button>Start</button>
-			<button>Settings</button>
-		</main>
+		<h1 class="title">Snake</h1>
+		<ol class="levels">
+			<li>
+				<a href="#level-1">Level 1</a>
+			</li>
+			<li>
+				<a href="#level-2">Level 2</a>
+			</li>
+			<li>
+				<a href="#level-3">Level 3</a>
+			</li>
+		</ol>
 	</template>
+
 	<template id="level-template">
-		<header>
-			<h1 class="title"></h1>
-		</header>
-		<main>
-			<canvas id="game-canvas"></canvas>
-		</main>
+		<h1 class="title"></h1>
+		<div class="game-wrapper">
+			<canvas></canvas>
+		</div>
 	</template>
 </body>
 </html>
