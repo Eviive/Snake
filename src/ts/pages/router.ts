@@ -1,3 +1,4 @@
+import { CallbackFunctions } from "../types/router.js";
 import { home } from "./home.js";
 import { game } from "./game.js";
 
@@ -15,7 +16,7 @@ export const router = () => {
 	}
 };
 
-export const displayPage = (template: string, callback?: (page: DocumentFragment) => void) => {
+export const displayPage = (template: string, callbacks: CallbackFunctions = {}) => {
 	const root = document.querySelector("#root");
 
 	const pageTemplate = document.querySelector(template);
@@ -23,8 +24,10 @@ export const displayPage = (template: string, callback?: (page: DocumentFragment
 	if (root && pageTemplate instanceof HTMLTemplateElement) {
 		const pageFragment = pageTemplate.content;
 		
-		callback && callback(pageFragment);
+		callbacks.onMount && callbacks.onMount(root, pageFragment);
 		
 		root.replaceChildren(pageFragment.cloneNode(true));
+		
+		callbacks.afterMount && callbacks.afterMount();
 	}
 };
