@@ -27,6 +27,10 @@ export class Snake {
 		this.#ctx = ctx;
 
 		this.#level = level;
+
+		this.#resize();
+		const resizeHandler = () => this.#resize();
+		window.addEventListener("resize", resizeHandler);
 	}
 
 	static async builder(levelId: number) {
@@ -49,6 +53,30 @@ export class Snake {
 	
 	#cleanup() {
 		// TODO
+	}
+
+	#resize() {
+		this.#canvas.width = 0;
+		this.#canvas.height = 0;
+		
+		const parent = this.#canvas.parentElement;
+		
+		const parentWidth = parent?.clientWidth ?? 0;
+		const parentHeight = parent?.clientHeight ?? 0;
+		
+		let canvasWidth = parentWidth;
+
+		const ratio = this.#level.dimensions[0] / this.#level.dimensions[1];
+		
+		let canvasHeight = canvasWidth / ratio;
+
+		if (canvasHeight > parentHeight) {
+			canvasHeight = parentHeight;
+			canvasWidth = canvasHeight * ratio;
+		}
+
+		this.#canvas.width = canvasWidth;
+		this.#canvas.height = canvasHeight;
 	}
 	
 	#render() {
