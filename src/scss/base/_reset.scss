@@ -27,22 +27,33 @@ html {
 	scroll-behavior: smooth;
 	
 	body {
+		--primary-1: 0deg, 0%, 10%;
+		--primary-2: 0deg, 0%, 14%;
+		--secondary-1: 0deg, 0%, 95%;
+		--secondary-2: 0deg, 0%, 71%;
+		
 		min-height: 100vh;
 		min-height: 100dvh;
 
-		display: flex;		
-		flex-direction: column;
-
+		display: flex;
+		
+		color: hsl(var(--secondary-1));
 		font-size: 16px;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
+		
+		background-color: hsl(var(--primary-1));
 
 		&:has(.no-scroll) {
 			overflow-y: hidden;
 		}
 
-		main {
+		#root {
 			flex-grow: 1;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2em;
 		}
 	}
 }

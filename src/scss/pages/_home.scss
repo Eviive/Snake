@@ -1,0 +1,34 @@
+#root.home {
+	padding: 2em;
+	
+	.title {
+		padding: 1.5em 0;
+		font-size: 3em;
+	}
+		
+	.levels {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		gap: 2em;
+		font-size: 1.5em;
+		
+		li {
+			display: flex;
+
+			a {
+				padding: 1em 2em;
+				font-weight: bold;
+				text-transform: uppercase;
+				border-radius: 7px;
+				background-color: hsl(var(--primary-2));
+				transition: scale .3s ease;
+
+				&:active {
+					scale: .95;
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,19 @@
+@use "../abstracts";
+
+#root.game {
+	padding: 2em 4%;
+	max-width: 100%;
+	
+	.title {
+		padding: .25em 0;
+		font-size: 2.5em;
+	}
+
+	.game-wrapper {
+		flex-grow: 1;
+		max-width: 100%;
+		width: 100%;
+		display: grid;
+		place-items: center;
+	}
+}
