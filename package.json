@@ -1,0 +1,13 @@
+{
+	"name": "snake",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "START /B tsc -w & START /B sass -w src/scss:public/css"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC"
+}
