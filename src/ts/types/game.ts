@@ -2,7 +2,7 @@ export type Coordinates = [number, number];
 
 export interface LevelFile {
 	dimensions: Coordinates;
-	delay: number;
+	speed: number; // pixels per second
 	walls: Coordinates[];
 	food: Coordinates[];
 	snake: Coordinates[];
