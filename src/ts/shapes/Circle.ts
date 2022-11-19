@@ -6,7 +6,7 @@ export class Circle extends Shape {
 	
 	constructor(x: number, y: number, color: string, radius: number) {
 		super(x, y, color);
-		this.#radius = radius;
+		this.#radius = Math.floor(radius);
 	}
 
 	update(velocity: number, max: number) {
@@ -21,7 +21,7 @@ export class Circle extends Shape {
 		ctx.fillStyle = this.color;
 		ctx.beginPath();
 		
-		ctx.arc(this.x + this.#radius, this.y + this.#radius, this.#radius, 0, 2 * Math.PI);
+		ctx.arc(Math.ceil(this.x + this.#radius), Math.ceil(this.y + this.#radius), Math.ceil(this.#radius), 0, 2 * Math.PI);
 
 		ctx.closePath();
 		ctx.fill();
