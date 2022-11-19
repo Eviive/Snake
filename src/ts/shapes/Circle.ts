@@ -21,7 +21,7 @@ export class Circle extends Shape {
 		ctx.fillStyle = this.color;
 		ctx.beginPath();
 		
-		ctx.arc(this.x, this.y, this.#radius, 0, 2 * Math.PI);
+		ctx.arc(this.x + this.#radius, this.y + this.#radius, this.#radius, 0, 2 * Math.PI);
 
 		ctx.closePath();
 		ctx.fill();
