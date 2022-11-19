@@ -53,18 +53,22 @@ export class Snake {
 			let direction: Direction | undefined;
 			switch (e.key) {
 				case "ArrowUp":
+				case "z":
 					direction = Direction.Up;
 					break;
 				
 				case "ArrowRight":
+				case "d":
 					direction = Direction.Right;
 					break;
 
 				case "ArrowDown":
+				case "s":
 					direction = Direction.Down;
 					break;
 
 				case "ArrowLeft":
+				case "q":
 					direction = Direction.Left;
 					break;
 			}
