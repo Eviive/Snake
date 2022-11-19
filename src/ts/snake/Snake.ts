@@ -1,4 +1,4 @@
-import { Shape, Square, Circle } from "../shapes/index.js";
+import { Square, Circle } from "../shapes/index.js";
 import { Coordinates, Direction, GameMap, LevelFile, Tile } from "../types/game.js";
 import { create2DArray } from "../utils/array.js";
 
@@ -6,8 +6,9 @@ export class Snake {
 	
 	static #isBuilding: boolean = false;
 	
-	#canvas: HTMLCanvasElement;
-	#ctx: CanvasRenderingContext2D;
+	#bgCtx: CanvasRenderingContext2D;
+	#fgCtx: CanvasRenderingContext2D;
+
 	#level: LevelFile;
 	
 	#frame?: number;
@@ -26,17 +27,22 @@ export class Snake {
 			throw new Error("Snake can only be built using the builder method");
 		}
 		
-		const canvas = document.querySelector("canvas");
-		if (!canvas) {
-			throw new Error("Couldn't find the game's #canvas");
-		}
-		this.#canvas = canvas;
+		const bgCanvas = document.querySelector<HTMLCanvasElement>("canvas#background-canvas");
+		const fgCanvas = document.querySelector<HTMLCanvasElement>("canvas#foreground-canvas");
 
-		const ctx = this.#canvas.getContext("2d", { alpha: false });
-		if (!ctx) {
-			throw new Error("Couldn't get the #canvas' context");
+		if (!bgCanvas || !fgCanvas) {
+			throw new Error("Couldn't find all of the game's canvases");
 		}
-		this.#ctx = ctx;
+
+		const bgCtx = bgCanvas.getContext("2d", { alpha: false });
+		const fgCtx = fgCanvas.getContext("2d", { alpha: true });
+
+		if (!bgCtx || !fgCtx) {
+			throw new Error("Couldn't get all the canvas' contexts");
+		}
+		
+		this.#bgCtx = bgCtx,
+		this.#fgCtx = fgCtx;
 
 		this.#level = level;
 
@@ -132,10 +138,12 @@ export class Snake {
 	}
 
 	#resize() {
-		this.#canvas.width = 0;
-		this.#canvas.height = 0;
+		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
+			ctx.canvas.width = 0;
+			ctx.canvas.height = 0;
+		}
 		
-		const parent = this.#canvas.parentElement;
+		const parent = this.#bgCtx.canvas.parentElement;
 		
 		const parentWidth = parent?.clientWidth ?? 0;
 		const parentHeight = parent?.clientHeight ?? 0;
@@ -151,8 +159,12 @@ export class Snake {
 			canvasWidth = canvasHeight * ratio;
 		}
 
-		this.#canvas.width = canvasWidth;
-		this.#canvas.height = canvasHeight;
+		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
+			ctx.canvas.width = canvasWidth;
+			ctx.canvas.height = canvasHeight;
+		}
+
+		this.#drawMap();
 	}
 
 	#getRandomEmptyTile() {
@@ -167,14 +179,16 @@ export class Snake {
 	}
 
 	#write(text: string) {
+		const middleX = this.#bgCtx.canvas.width / 2;
+		const middleY = this.#bgCtx.canvas.height / 2;
 		const fontSize = 100;
-		const middleX = this.#canvas.width / 2;
-		const middleY = this.#canvas.height / 2;
+		const RGBValue = "255";
+		const alpha = .5;
 		
-		this.#ctx.fillStyle = "rgba(163, 163, 163, 0.5)";
-		this.#ctx.font = `bold ${fontSize}px Inter`;
-		this.#ctx.textAlign = "center";
-		this.#ctx.fillText(text, middleX, middleY + fontSize / 3);
+		this.#bgCtx.fillStyle = `rgba(${RGBValue}, ${RGBValue}, ${RGBValue}, ${alpha})`;
+		this.#bgCtx.font = `bold ${fontSize}px 'Inter', 'Open Sans', sans-serif`;
+		this.#bgCtx.textAlign = "center";
+		this.#bgCtx.fillText(text, middleX, middleY + fontSize / 3);
 	}
 
 	#iterate() {
@@ -239,7 +253,7 @@ export class Snake {
 			return;
 		}
 
-		this.#map[y][x] = Tile.SnakeBody;		
+		this.#map[y][x] = Tile.SnakeBody;
 		this.#map[newY][newX] = Tile.SnakeHead;
 		
 		this.#snake.unshift([newX, newY]);
@@ -252,50 +266,40 @@ export class Snake {
 	#drawMap() {
 		const { dimensions: [width, height] } = this.#level;
 
-		const cellWidth = this.#canvas.width / width;
-		const cellHeight = this.#canvas.height / height;
-		
-		this.#write(this.#score.toString());
-		
+		const cellWidth = this.#bgCtx.canvas.width / width;
+		const cellHeight = this.#bgCtx.canvas.height / height;
+				
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
+
 				const cell = this.#map[y][x];
-
-				const shapes: Shape[] = [];
 				
-				switch (cell) {
-					case Tile.Empty:
-						break;
+				const color = (x + y) % 2 === 0 ? "#494351" : "#443e4c";
+				new Square(x * cellWidth, y * cellHeight, color, cellWidth).draw(this.#bgCtx);
 
+				switch (cell) {
 					case Tile.Wall:
-						shapes.push(new Square(x * cellWidth, y * cellHeight, "gray", cellWidth));
+						new Square(x * cellWidth, y * cellHeight, "gray", cellWidth).draw(this.#bgCtx);
 						break;
 
 					case Tile.Food:
-						shapes.push(new Circle(x * cellWidth, y * cellHeight, "red", cellWidth / 2));
+						new Circle(x * cellWidth, y * cellHeight, "red", cellWidth / 2).draw(this.#fgCtx);
 						break;
 
 					case Tile.SnakeBody:
-						shapes.push(new Square(x * cellWidth, y * cellHeight, "green", cellWidth));
+						new Square(x * cellWidth, y * cellHeight, "green", cellWidth).draw(this.#fgCtx);
 						break;
 
 					case Tile.SnakeHead:
-						shapes.push(new Circle(x * cellWidth, y * cellHeight, "green", cellWidth / 2));
-						shapes.push(new Circle(x * cellWidth + cellWidth / 1.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7));
-						shapes.push(new Circle(x * cellWidth + cellWidth / 4.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7));
+						new Circle(x * cellWidth, y * cellHeight, "green", cellWidth / 2).draw(this.#fgCtx);
+						new Circle(x * cellWidth + cellWidth / 1.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7).draw(this.#fgCtx);
+						new Circle(x * cellWidth + cellWidth / 4.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7).draw(this.#fgCtx);
 						break;
-
-					default:
-						throw new TypeError(`Unknown tile type ${cell}`);
-				}
-
-				for (const s of shapes) {
-					s.draw(this.#ctx);
 				}
 			}
 		}
 
-		this.#iterate();
+		this.#write(this.#score.toString());
 	}
 	
 	#render(time: DOMHighResTimeStamp) {
@@ -304,10 +308,14 @@ export class Snake {
 		this.#now = time;
 		const delta = (this.#now - (this.#then ?? 0)) / 1000;
 		this.#then = this.#now;
-		
-		this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+
+		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
+			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		}
 		
 		this.#drawMap();
+
+		this.#iterate();
 
 		// this.#frame = requestAnimationFrame(time => this.#render(time));
 	}
