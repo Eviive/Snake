@@ -10,10 +10,15 @@
 	}
 
 	.game-wrapper {
+		position: relative;
 		flex-grow: 1;
 		max-width: 100%;
 		width: 100%;
 		display: grid;
 		place-items: center;
+
+		canvas {
+			position: absolute;
+		}
 	}
 }
