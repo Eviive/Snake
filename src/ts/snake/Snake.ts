@@ -12,8 +12,8 @@ export class Snake {
 	#level: LevelFile;
 	
 	#frame?: number;
-	#then: DOMHighResTimeStamp | null = null;
-	#now: DOMHighResTimeStamp | null = null;
+	#then?: DOMHighResTimeStamp;
+	#now?: DOMHighResTimeStamp;
 
 	#map: GameMap = [];
 	#snake: Coordinates[] = [];
@@ -106,8 +106,7 @@ export class Snake {
 	
 	#cleanup() {
 		if (this.#frame) {
-			// cancelAnimationFrame(this.#frame);
-			clearInterval(this.#frame);
+			cancelAnimationFrame(this.#frame);
 		}
 	}
 
@@ -191,7 +190,7 @@ export class Snake {
 		this.#bgCtx.fillText(text, middleX, middleY + fontSize / 3);
 	}
 
-	#iterate() {
+	#iterate(): boolean {
 		const { dimensions: [width, height] } = this.#level;
 
 		const [x, y] = this.#snake[0];
@@ -222,14 +221,14 @@ export class Snake {
 		
 		if (newX < 0 || newX >= width || newY < 0 || newY >= height) {
 			this.#cleanup();
-			return;
+			return false;
 		}
 
 		let tile = this.#map[newY][newX];
 		
 		if (tile === Tile.Wall) {
 			this.#cleanup();
-			return;
+			return false;
 		}
 
 		let tail: Coordinates | undefined;
@@ -250,7 +249,7 @@ export class Snake {
 				this.#map[tail[1]][tail[0]] = Tile.SnakeBody;
 			}
 			this.#cleanup();
-			return;
+			return false;
 		}
 
 		this.#map[y][x] = Tile.SnakeBody;
@@ -261,9 +260,11 @@ export class Snake {
 		if (this.#map[newY][newX] !== Tile.SnakeHead) {
 			throw new Error("The snake's head is not where it should be");
 		}
+
+		return true;
 	}
 
-	#drawMap() {
+	#drawMap(delta: number = 0) {
 		const { dimensions: [width, height] } = this.#level;
 
 		const cellWidth = this.#bgCtx.canvas.width / width;
@@ -306,26 +307,41 @@ export class Snake {
 		console.log("render");
 		
 		this.#now = time;
-		const delta = (this.#now - (this.#then ?? 0)) / 1000;
-		this.#then = this.#now;
 
-		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		}
+		const elapsed = this.#now - (this.#then ?? 0);
 		
-		this.#drawMap();
+		let gameOver = false;
+		
+		if (elapsed >= this.#level.speed) {
+			
+			if (this.#then === undefined) {
+				console.log("First render");
+			} else if (elapsed > this.#level.speed + 30) {
+				console.warn(`Game loop is taking too long, skipping ${elapsed - this.#level.speed}ms`);
+			} else {
+				console.log("Time elapsed", elapsed);
+			}
+			
+			const delta = (this.#now - (this.#then ?? 0)) / 1000;
+			
+			for (const ctx of [this.#bgCtx, this.#fgCtx]) {
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+			}
+			
+			this.#drawMap(delta);
+			
+			gameOver = !this.#iterate();
 
-		this.#iterate();
+			this.#then = this.#now;
+		}
 
-		// this.#frame = requestAnimationFrame(time => this.#render(time));
+		if (!gameOver) {
+			this.#frame = requestAnimationFrame(time => this.#render(time));
+		}
 	}
 
 	run() {
-		// requestAnimationFrame(time => {
-		// 	this.#then = time;
-		// 	this.#render(time);
-		// });
-		this.#frame = setInterval(() => this.#render(0), this.#level.speed);
+		requestAnimationFrame(time => this.#render(time));
 	}
 
 }
