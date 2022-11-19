@@ -1,3 +1,4 @@
+import { Snake } from "../snake/Snake.js";
 import { displayPage } from "./router.js";
 
 export const game = (level: number) => {
@@ -16,6 +17,12 @@ export const game = (level: number) => {
 			title.textContent = titleText;
 		}
 	};
+
+	const afterMount = async () => {
+		const snake = await Snake.builder(level);
+
+		snake.run();
+	};
 	
-	displayPage("#level-template", { onMount });
+	displayPage("#level-template", { onMount, afterMount });
 };
