@@ -6,7 +6,7 @@ export class Square extends Shape {
 	
 	constructor(x: number, y: number, color: string, size: number) {
 		super(x, y, color);
-		this.#size = size;
+		this.#size = Math.ceil(size);
 	}
 
 	update(velocity: number, max: number) {

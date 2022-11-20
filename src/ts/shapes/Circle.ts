@@ -6,7 +6,7 @@ export class Circle extends Shape {
 	
 	constructor(x: number, y: number, color: string, radius: number) {
 		super(x, y, color);
-		this.#radius = radius;
+		this.#radius = Math.floor(radius);
 	}
 
 	update(velocity: number, max: number) {
