@@ -1,4 +1,5 @@
-import { Snake } from "../snake/Snake.js";
+import { Game } from "../game/Game.js";
+import { SnakeSprite } from "../game/SnakeSprite.js";
 import { displayPage } from "./router.js";
 
 export const game = (level: number) => {
@@ -19,8 +20,10 @@ export const game = (level: number) => {
 	};
 
 	const afterMount = async () => {
-		const snake = await Snake.builder(level);
-
+		await SnakeSprite.load("sprite-sheet.png", 64, 64);
+		
+		const snake = await Game.builder(level);
+		
 		snake.run();
 	};
 	

@@ -1,8 +1,10 @@
-import { Square, Circle } from "../shapes/index.js";
-import { Coordinates, Direction, GameMap, LevelFile, SnakePart, Tile } from "../types/game.js";
+import { SnakePart } from "../snake/SnakePart.js";
+import { Square } from "../shapes/index.js";
+import { Coordinates, Direction, GameMap, LevelFile, SnakeSpriteType, Tile } from "../types/game.js";
 import { create2DArray } from "../utils/array.js";
+import { SnakeSprite } from "./SnakeSprite.js";
 
-export class Snake {
+export class Game {
 	
 	static #isBuilding: boolean = false;
 	
@@ -17,14 +19,14 @@ export class Snake {
 	#elapsed: DOMHighResTimeStamp = 0;
 
 	#map: GameMap = [];
-	#snake: SnakePart[] = [];
 	#score: number = 0;
+	#sprite: SnakeSprite;
 
 	#direction: Direction = Direction.Up;
 	#treated: boolean = true;
 	
-	constructor(level: LevelFile) {
-		if (!Snake.#isBuilding) {
+	constructor(level: LevelFile, sprite: SnakeSprite) {
+		if (!Game.#isBuilding) {
 			throw new Error("Snake can only be built using the builder method");
 		}
 		
@@ -46,6 +48,7 @@ export class Snake {
 		this.#fgCtx = fgCtx;
 
 		this.#level = level;
+		this.#sprite = sprite;
 
 		this.#resize();
 		const resizeHandler = () => {
@@ -60,30 +63,30 @@ export class Snake {
 			if (this.#treated === false) {
 				return;
 			}
-			let direction: Direction | undefined;
+			let newDirection: Direction | undefined;
 			switch (e.key) {
 				case "ArrowUp":
 				case "z":
-					direction = Direction.Up;
+					newDirection = Direction.Up;
 					break;
 				
 				case "ArrowRight":
 				case "d":
-					direction = Direction.Right;
+					newDirection = Direction.Right;
 					break;
 
 				case "ArrowDown":
 				case "s":
-					direction = Direction.Down;
+					newDirection = Direction.Down;
 					break;
 
 				case "ArrowLeft":
 				case "q":
-					direction = Direction.Left;
+					newDirection = Direction.Left;
 					break;
 			}
-			if (direction && -direction !== this.#direction) {
-				this.#direction = direction;
+			if (newDirection && -newDirection !== this.#direction) {
+				this.#direction = newDirection;
 				this.#treated = false;
 			}
 		};
@@ -91,24 +94,29 @@ export class Snake {
 	}
 
 	static async builder(levelId: number) {
-		Snake.#isBuilding = true;
+		Game.#isBuilding = true;
 		try {
-			const module = await import(`../../assets/levels/level-${levelId}.json`, {
-				assert: { type: "json" }
-			});
+			const res = await Promise.all([
+				SnakeSprite.load("sprite-sheet.png", 64, 64),
+				import(`../../assets/levels/level-${levelId}.json`, {
+					assert: { type: "json" }
+				})
+			]);
+
+			const [sprite, module] = res;
 			
 			const level = module.default as LevelFile;
-
-			return new this(level);
+			
+			return new this(level, sprite);
 		} catch (e) {
 			console.error(e);
-			throw new Error(`Couldn't import the level ${levelId}'s file`, { cause: e });
+			throw new Error(`Couldn't build the level ${levelId}`, { cause: e });
 		} finally {
-			Snake.#isBuilding = false;
+			Game.#isBuilding = false;
 		}
 	}
 	
-	#cleanup() {
+	#cleanup() { // TODO: do a real cleanup, remove all the events
 		if (this.#frame) {
 			cancelAnimationFrame(this.#frame);
 		}
@@ -118,7 +126,7 @@ export class Snake {
 		const { dimensions: [width, height], walls, food, snake } = this.#level;
 		
 		this.#map = create2DArray(width, height, Tile.Empty);
-		
+
 		for (const [x, y] of walls) {
 			this.#map[y][x] = Tile.Wall;
 		}
@@ -126,17 +134,10 @@ export class Snake {
 		for (const [x, y] of food) {
 			this.#map[y][x] = Tile.Food;
 		}
-		
-		const head = snake.shift();
-		if (!head) {
-			throw new Error("The snake doesn't have a head");
-		}
-		this.#map[head[1]][head[0]] = Tile.SnakeHead;
-		this.#snake.push({ coordinates: head, direction: Direction.Up }); // TODO: remove the hardcoded direction
 
 		for (const [x, y] of snake) {
 			this.#map[y][x] = Tile.SnakeBody;
-			this.#snake.push({ coordinates: [x, y], direction: Direction.Up }); // TODO: remove the hardcoded direction
+			SnakePart.addPart([x, y], Direction.Up); // TODO: remove the hardcoded direction
 		}
 	}
 
@@ -179,55 +180,10 @@ export class Snake {
 		return tile;
 	}
 
-	#adjustCoordinates([x, y]: Coordinates, delta: number, direction: Direction) {
-		switch (direction) {
-			case Direction.Up:
-				y -= delta;
-				break;
-
-			case Direction.Right:
-				x += delta;
-				break;
-
-			case Direction.Down:
-				y += delta;
-				break;
-
-			case Direction.Left:
-				x -= delta;
-				break;
-
-			default:
-				throw new Error(`Unknown direction ${direction}`);
-		}
-
-		return [x, y];
-	}
-
-	#generateBodyShapes(snakePart: SnakePart, delta: number, cellWidth: number, cellHeight: number) {
-		
-		const [x, y] = this.#adjustCoordinates(snakePart.coordinates, delta, snakePart.direction);
-		
-		return [
-			new Square(x * cellWidth, y * cellHeight, "green", cellWidth)
-		];
-	}
-	
-	#generateHeadShapes(snakePart: SnakePart, delta: number, cellWidth: number, cellHeight: number) {
-		
-		const [x, y] = this.#adjustCoordinates(snakePart.coordinates, delta, snakePart.direction);
-
-		return [
-			new Circle(x * cellWidth, y * cellHeight, "green", cellWidth / 2),
-			new Circle(x * cellWidth + cellWidth / 1.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7),
-			new Circle(x * cellWidth + cellWidth / 4.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7)
-		];
-	}
-
 	#write(text: string) {
 		const middleX = this.#bgCtx.canvas.width / 2;
 		const middleY = this.#bgCtx.canvas.height / 2;
-		const fontSize = 100;
+		const fontSize = this.#bgCtx.canvas.width / 10;
 		const RGBValue = "255";
 		const alpha = .5;
 		
@@ -240,7 +196,7 @@ export class Snake {
 	#iterate(direction: Direction): boolean {
 		const { dimensions: [width, height] } = this.#level;
 		
-		const [x, y] = this.#snake[0].coordinates;
+		const [x, y] = SnakePart.getHead().coordinates;
 		let newX = x;
 		let newY = y;
 
@@ -283,7 +239,7 @@ export class Snake {
 			const newFood = this.#getRandomEmptyTile();
 			this.#map[newFood[1]][newFood[0]] = Tile.Food;
 		} else {
-			tail = this.#snake.pop()!;
+			tail = SnakePart.removeLast();
 			this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.Empty;
 		}
 
@@ -291,7 +247,7 @@ export class Snake {
 
 		if (tile === Tile.SnakeBody) {
 			if (tail) {
-				this.#snake.push(tail);
+				SnakePart.parts.push(tail); // TODO: pas de surcharge bruh
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
 			this.#cleanup();
@@ -301,11 +257,8 @@ export class Snake {
 		this.#map[y][x] = Tile.SnakeBody;
 		this.#map[newY][newX] = Tile.SnakeHead;
 		
-		this.#snake.unshift({
-			coordinates: [newX, newY],
-			direction
-		});
-
+		SnakePart.addPart([newX, newY], direction, true);
+		
 		if (this.#map[newY][newX] !== Tile.SnakeHead) {
 			throw new Error("The snake's head is not where it should be");
 		}
@@ -333,27 +286,23 @@ export class Snake {
 						break;
 
 					case Tile.Food:
-						new Circle(x * cellWidth, y * cellHeight, "red", cellWidth / 2).draw(this.#fgCtx);
+						this.#sprite.drawSprite(this.#fgCtx, SnakeSpriteType.Food, {
+							x: x * cellWidth,
+							y: y * cellHeight,
+							width: cellWidth,
+							height: cellHeight,
+							scale: 1.3
+						});
 						break;
 
 					case Tile.SnakeBody:
-						const snakeBody = this.#snake.find(part => part.coordinates[0] === x && part.coordinates[1] === y);
-						if (!snakeBody) {
-							throw new Error("Snake part not found");
-						}
-						for (const s of this.#generateBodyShapes(snakeBody, delta, cellWidth, cellHeight)) {
-							s.draw(this.#fgCtx);
-						}
-						break;
-
 					case Tile.SnakeHead:
-						const snakeHead = this.#snake[0];
-						if (!snakeHead) {
+						const part = SnakePart.findPart([x, y]);
+						if (!part) {
 							throw new Error("Snake part not found");
 						}
-						for (const s of this.#generateHeadShapes(snakeHead, delta, cellWidth, cellHeight)) {
-							s.draw(this.#fgCtx);
-						}
+
+						part.draw(this.#fgCtx, this.#sprite, cellWidth, cellHeight, delta);
 						break;
 				}
 			}
@@ -388,7 +337,7 @@ export class Snake {
 			} else if (this.#elapsed > this.#level.delay + 30) {
 				console.warn(`Game loop is taking too long, skipping ${Math.round(this.#elapsed - this.#level.delay)}ms`);
 			} else {
-				console.log(`Time elapsed ${Math.round(this.#elapsed)}ms`);
+				console.log(`Iterating, last iteration was ${Math.round(this.#elapsed)}ms ago`);
 			}
 
 			this.#elapsed = 0;
