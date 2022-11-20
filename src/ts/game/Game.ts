@@ -1,4 +1,4 @@
-import { SnakePart } from "../snake/SnakePart.js";
+import { Snake } from "../snake/Snake.js";
 import { Square } from "../shapes/index.js";
 import { Coordinates, Direction, GameMap, LevelFile, SnakeSpriteType, Tile } from "../types/game.js";
 import { create2DArray } from "../utils/array.js";
@@ -22,7 +22,7 @@ export class Game {
 	#score: number = 0;
 	#sprite: SnakeSprite;
 
-	#direction: Direction = Direction.Up;
+	#direction: Direction;
 	#treated: boolean = true;
 	
 	constructor(level: LevelFile, sprite: SnakeSprite) {
@@ -48,11 +48,12 @@ export class Game {
 		this.#fgCtx = fgCtx;
 
 		this.#level = level;
+		this.#direction = level.direction;
 		this.#sprite = sprite;
 
 		this.#resize();
 		const resizeHandler = () => {
-			this.#resize()
+			this.#resize();
 			this.#drawMap();
 		};
 		window.addEventListener("resize", resizeHandler);
@@ -123,7 +124,7 @@ export class Game {
 	}
 
 	#createLevel() {
-		const { dimensions: [width, height], walls, food, snake } = this.#level;
+		const { dimensions: [width, height], walls, snake } = this.#level;
 		
 		this.#map = create2DArray(width, height, Tile.Empty);
 
@@ -131,14 +132,20 @@ export class Game {
 			this.#map[y][x] = Tile.Wall;
 		}
 
-		for (const [x, y] of food) {
-			this.#map[y][x] = Tile.Food;
+		if (snake.length < 2) {
+			throw new Error("The snake must have at least a head and a tail");
 		}
-
+		
+		const head = snake.shift()!;
+		this.#map[head[1]][head[0]] = Tile.SnakeHead;
+		Snake.addPart(head, this.#direction);
+		
 		for (const [x, y] of snake) {
 			this.#map[y][x] = Tile.SnakeBody;
-			SnakePart.addPart([x, y], Direction.Up); // TODO: remove the hardcoded direction
+			Snake.addPart([x, y], this.#direction);
 		}
+
+		this.#generateFood();
 	}
 
 	#resize() {
@@ -180,11 +187,16 @@ export class Game {
 		return tile;
 	}
 
+	#generateFood() {
+		const newFood = this.#getRandomEmptyTile();
+		this.#map[newFood[1]][newFood[0]] = Tile.Food;
+	}
+
 	#write(text: string) {
 		const middleX = this.#bgCtx.canvas.width / 2;
 		const middleY = this.#bgCtx.canvas.height / 2;
 		const fontSize = this.#bgCtx.canvas.width / 10;
-		const RGBValue = "255";
+		const RGBValue = 255;
 		const alpha = .5;
 		
 		this.#bgCtx.fillStyle = `rgba(${RGBValue}, ${RGBValue}, ${RGBValue}, ${alpha})`;
@@ -196,7 +208,8 @@ export class Game {
 	#iterate(direction: Direction): boolean {
 		const { dimensions: [width, height] } = this.#level;
 		
-		const [x, y] = SnakePart.getHead().coordinates;
+		const [x, y] = Snake.getHead().coordinates;
+		
 		let newX = x;
 		let newY = y;
 
@@ -233,13 +246,12 @@ export class Game {
 			return false;
 		}
 
-		let tail: SnakePart | undefined;
+		let tail: Snake | undefined;
 		if (tile === Tile.Food) {
 			this.#score++;
-			const newFood = this.#getRandomEmptyTile();
-			this.#map[newFood[1]][newFood[0]] = Tile.Food;
+			this.#generateFood();
 		} else {
-			tail = SnakePart.removeLast();
+			tail = Snake.removeLast();
 			this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.Empty;
 		}
 
@@ -247,7 +259,7 @@ export class Game {
 
 		if (tile === Tile.SnakeBody) {
 			if (tail) {
-				SnakePart.parts.push(tail); // TODO: pas de surcharge bruh
+				Snake.parts.push(tail); // TODO: pas de surcharge bruh
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
 			this.#cleanup();
@@ -257,7 +269,7 @@ export class Game {
 		this.#map[y][x] = Tile.SnakeBody;
 		this.#map[newY][newX] = Tile.SnakeHead;
 		
-		SnakePart.addPart([newX, newY], direction, true);
+		Snake.addPart([newX, newY], direction, true);
 		
 		if (this.#map[newY][newX] !== Tile.SnakeHead) {
 			throw new Error("The snake's head is not where it should be");
@@ -297,7 +309,7 @@ export class Game {
 
 					case Tile.SnakeBody:
 					case Tile.SnakeHead:
-						const part = SnakePart.findPart([x, y]);
+						const part = Snake.findPart([x, y]);
 						if (!part) {
 							throw new Error("Snake part not found");
 						}

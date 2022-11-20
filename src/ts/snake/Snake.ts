@@ -1,9 +1,9 @@
 import { SnakeSprite } from "ts/game/SnakeSprite.js";
 import { Coordinates, Direction, SnakePartType, SnakeSpriteType } from "../types/game.js";
 
-export class SnakePart {
+export class Snake {
 	
-	static #parts: SnakePart[] = [];
+	static #parts: Snake[] = [];
 	
 	#coordinates: Coordinates;
 	#direction: Direction;
@@ -21,6 +21,10 @@ export class SnakePart {
 		return this.#coordinates;
 	}
 
+	get direction() {
+		return this.#direction;
+	}
+	
 	static getHead() {
 		return this.#parts[0];
 	}
@@ -30,11 +34,11 @@ export class SnakePart {
 	}
 
 	#getType(): SnakePartType {
-		switch (SnakePart.#parts.indexOf(this)) {
+		switch (Snake.#parts.indexOf(this)) {
 			case 0:
 				return SnakePartType.Head;
 		
-			case SnakePart.#parts.length - 1:
+			case Snake.#parts.length - 1:
 				return SnakePartType.Tail;
 				
 			default:
