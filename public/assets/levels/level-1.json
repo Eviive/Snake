@@ -1,6 +1,6 @@
 {
 	"dimensions": [40,20],
-	"speed": 100,
+	"delay": 100,
 	"walls": [
 		[2,2],
 		[2,3],

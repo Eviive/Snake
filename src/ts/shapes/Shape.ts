@@ -5,8 +5,8 @@ export abstract class Shape {
 	#color: string;
 	
 	constructor(x: number, y: number, color: string) {
-		this.#x = Math.ceil(x);
-		this.#y = Math.ceil(y);
+		this.#x = Math.floor(x);
+		this.#y = Math.floor(y);
 		this.#color = color;
 	}
 

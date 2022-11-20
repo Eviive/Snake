@@ -1,5 +1,5 @@
 import { Square, Circle } from "../shapes/index.js";
-import { Coordinates, Direction, GameMap, LevelFile, Tile } from "../types/game.js";
+import { Coordinates, Direction, GameMap, LevelFile, SnakePart, Tile } from "../types/game.js";
 import { create2DArray } from "../utils/array.js";
 
 export class Snake {
@@ -14,9 +14,10 @@ export class Snake {
 	#frame?: number;
 	#then?: DOMHighResTimeStamp;
 	#now?: DOMHighResTimeStamp;
+	#elapsed: DOMHighResTimeStamp = 0;
 
 	#map: GameMap = [];
-	#snake: Coordinates[] = [];
+	#snake: SnakePart[] = [];
 	#score: number = 0;
 
 	#direction: Direction = Direction.Up;
@@ -46,11 +47,14 @@ export class Snake {
 
 		this.#level = level;
 
-		this.#createLevel();
-		
 		this.#resize();
-		const resizeHandler = () => this.#resize();
+		const resizeHandler = () => {
+			this.#resize()
+			this.#drawMap();
+		};
 		window.addEventListener("resize", resizeHandler);
+
+		this.#createLevel();
 
 		const keydownHandler = (e: KeyboardEvent) => {
 			if (this.#treated === false) {
@@ -128,11 +132,11 @@ export class Snake {
 			throw new Error("The snake doesn't have a head");
 		}
 		this.#map[head[1]][head[0]] = Tile.SnakeHead;
-		this.#snake.push(head);
+		this.#snake.push({ coordinates: head, direction: Direction.Up }); // TODO: remove the hardcoded direction
 
 		for (const [x, y] of snake) {
 			this.#map[y][x] = Tile.SnakeBody;
-			this.#snake.push([x, y]);
+			this.#snake.push({ coordinates: [x, y], direction: Direction.Up }); // TODO: remove the hardcoded direction
 		}
 	}
 
@@ -162,8 +166,6 @@ export class Snake {
 			ctx.canvas.width = canvasWidth;
 			ctx.canvas.height = canvasHeight;
 		}
-
-		this.#drawMap();
 	}
 
 	#getRandomEmptyTile() {
@@ -175,6 +177,51 @@ export class Snake {
 		} while (this.#map[tile[1]][tile[0]] !== Tile.Empty);
 		
 		return tile;
+	}
+
+	#adjustCoordinates([x, y]: Coordinates, delta: number, direction: Direction) {
+		switch (direction) {
+			case Direction.Up:
+				y -= delta;
+				break;
+
+			case Direction.Right:
+				x += delta;
+				break;
+
+			case Direction.Down:
+				y += delta;
+				break;
+
+			case Direction.Left:
+				x -= delta;
+				break;
+
+			default:
+				throw new Error(`Unknown direction ${direction}`);
+		}
+
+		return [x, y];
+	}
+
+	#generateBodyShapes(snakePart: SnakePart, delta: number, cellWidth: number, cellHeight: number) {
+		
+		const [x, y] = this.#adjustCoordinates(snakePart.coordinates, delta, snakePart.direction);
+		
+		return [
+			new Square(x * cellWidth, y * cellHeight, "green", cellWidth)
+		];
+	}
+	
+	#generateHeadShapes(snakePart: SnakePart, delta: number, cellWidth: number, cellHeight: number) {
+		
+		const [x, y] = this.#adjustCoordinates(snakePart.coordinates, delta, snakePart.direction);
+
+		return [
+			new Circle(x * cellWidth, y * cellHeight, "green", cellWidth / 2),
+			new Circle(x * cellWidth + cellWidth / 1.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7),
+			new Circle(x * cellWidth + cellWidth / 4.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7)
+		];
 	}
 
 	#write(text: string) {
@@ -190,14 +237,14 @@ export class Snake {
 		this.#bgCtx.fillText(text, middleX, middleY + fontSize / 3);
 	}
 
-	#iterate(): boolean {
+	#iterate(direction: Direction): boolean {
 		const { dimensions: [width, height] } = this.#level;
-
-		const [x, y] = this.#snake[0];
+		
+		const [x, y] = this.#snake[0].coordinates;
 		let newX = x;
 		let newY = y;
 
-		switch (this.#direction) {
+		switch (direction) {
 			case Direction.Up:
 				newY--;
 				break;
@@ -215,9 +262,8 @@ export class Snake {
 				break;
 			
 			default:
-				throw new Error(`Unknown direction ${this.#direction}`);
+				throw new Error(`Unknown direction ${direction}`);
 		}
-		this.#treated = true;
 		
 		if (newX < 0 || newX >= width || newY < 0 || newY >= height) {
 			this.#cleanup();
@@ -231,14 +277,14 @@ export class Snake {
 			return false;
 		}
 
-		let tail: Coordinates | undefined;
+		let tail: SnakePart | undefined;
 		if (tile === Tile.Food) {
 			this.#score++;
 			const newFood = this.#getRandomEmptyTile();
 			this.#map[newFood[1]][newFood[0]] = Tile.Food;
 		} else {
 			tail = this.#snake.pop()!;
-			this.#map[tail[1]][tail[0]] = Tile.Empty;
+			this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.Empty;
 		}
 
 		tile = this.#map[newY][newX];
@@ -246,7 +292,7 @@ export class Snake {
 		if (tile === Tile.SnakeBody) {
 			if (tail) {
 				this.#snake.push(tail);
-				this.#map[tail[1]][tail[0]] = Tile.SnakeBody;
+				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
 			this.#cleanup();
 			return false;
@@ -255,7 +301,10 @@ export class Snake {
 		this.#map[y][x] = Tile.SnakeBody;
 		this.#map[newY][newX] = Tile.SnakeHead;
 		
-		this.#snake.unshift([newX, newY]);
+		this.#snake.unshift({
+			coordinates: [newX, newY],
+			direction
+		});
 
 		if (this.#map[newY][newX] !== Tile.SnakeHead) {
 			throw new Error("The snake's head is not where it should be");
@@ -269,7 +318,7 @@ export class Snake {
 
 		const cellWidth = this.#bgCtx.canvas.width / width;
 		const cellHeight = this.#bgCtx.canvas.height / height;
-				
+		
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
 
@@ -288,13 +337,23 @@ export class Snake {
 						break;
 
 					case Tile.SnakeBody:
-						new Square(x * cellWidth, y * cellHeight, "green", cellWidth).draw(this.#fgCtx);
+						const snakeBody = this.#snake.find(part => part.coordinates[0] === x && part.coordinates[1] === y);
+						if (!snakeBody) {
+							throw new Error("Snake part not found");
+						}
+						for (const s of this.#generateBodyShapes(snakeBody, delta, cellWidth, cellHeight)) {
+							s.draw(this.#fgCtx);
+						}
 						break;
 
 					case Tile.SnakeHead:
-						new Circle(x * cellWidth, y * cellHeight, "green", cellWidth / 2).draw(this.#fgCtx);
-						new Circle(x * cellWidth + cellWidth / 1.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7).draw(this.#fgCtx);
-						new Circle(x * cellWidth + cellWidth / 4.5, y * cellHeight + cellHeight / 4, "red", cellWidth / 7).draw(this.#fgCtx);
+						const snakeHead = this.#snake[0];
+						if (!snakeHead) {
+							throw new Error("Snake part not found");
+						}
+						for (const s of this.#generateHeadShapes(snakeHead, delta, cellWidth, cellHeight)) {
+							s.draw(this.#fgCtx);
+						}
 						break;
 				}
 			}
@@ -307,34 +366,39 @@ export class Snake {
 		console.log("render");
 		
 		this.#now = time;
-
-		const elapsed = this.#now - (this.#then ?? 0);
+		this.#elapsed += this.#now - (this.#then ?? 0);
 		
+		const direction = this.#direction;
+		
+		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
+			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		}
+
+		// advancement pourcentage of the frame (between 0 and 1)
+		const delta = Math.min(1, this.#elapsed / this.#level.delay) - 1;
+		
+		this.#drawMap(delta);
+
 		let gameOver = false;
 		
-		if (elapsed >= this.#level.speed) {
+		if (this.#elapsed >= this.#level.delay) {
 			
 			if (this.#then === undefined) {
 				console.log("First render");
-			} else if (elapsed > this.#level.speed + 30) {
-				console.warn(`Game loop is taking too long, skipping ${elapsed - this.#level.speed}ms`);
+			} else if (this.#elapsed > this.#level.delay + 30) {
+				console.warn(`Game loop is taking too long, skipping ${Math.round(this.#elapsed - this.#level.delay)}ms`);
 			} else {
-				console.log("Time elapsed", elapsed);
+				console.log(`Time elapsed ${Math.round(this.#elapsed)}ms`);
 			}
-			
-			const delta = (this.#now - (this.#then ?? 0)) / 1000;
-			
-			for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-			}
-			
-			this.#drawMap(delta);
-			
-			gameOver = !this.#iterate();
 
-			this.#then = this.#now;
+			this.#elapsed = 0;
+			this.#treated = true;
+			
+			gameOver = !this.#iterate(direction);
 		}
 
+		this.#then = this.#now;
+		
 		if (!gameOver) {
 			this.#frame = requestAnimationFrame(time => this.#render(time));
 		}
