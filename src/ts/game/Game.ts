@@ -98,7 +98,7 @@ export class Game {
 		Game.#isBuilding = true;
 		try {
 			const res = await Promise.all([
-				SnakeSprite.load("sprite-sheet.png", 64, 64),
+				SnakeSprite.load("sprite-sheet.png", 64),
 				import(`../../assets/levels/level-${levelId}.json`, {
 					assert: { type: "json" }
 				})
@@ -313,7 +313,7 @@ export class Game {
 		return true;
 	}
 
-	#drawMap(delta: number = 0) {
+	#drawMap(delta: number = 0, iterating: boolean = true) {
 		const { dimensions: [width, height] } = this.#level;
 
 		const cellWidth = this.#bgCtx.canvas.width / width;
@@ -324,12 +324,16 @@ export class Game {
 
 				const cell = this.#map[y][x];
 				
-				const color = (x + y) % 2 === 0 ? "#494351" : "#443e4c";
-				new Square(x * cellWidth, y * cellHeight, color, cellWidth).draw(this.#bgCtx);
+				if (iterating) {
+					const color = (x + y) % 2 === 0 ? "#494351" : "#443e4c";
+					new Square(x * cellWidth, y * cellHeight, color, cellWidth).draw(this.#bgCtx);
+				}
 
 				switch (cell) {
 					case Tile.Wall:
-						new Square(x * cellWidth, y * cellHeight, "gray", cellWidth).draw(this.#bgCtx);
+						if (iterating) {
+							new Square(x * cellWidth, y * cellHeight, "gray", cellWidth).draw(this.#bgCtx);
+						}
 						break;
 
 					case Tile.Food:
@@ -355,7 +359,9 @@ export class Game {
 			}
 		}
 
-		this.#write(this.#score.toString());
+		if (iterating) {
+			this.#write(this.#score.toString());
+		}
 	}
 	
 	#render(time: DOMHighResTimeStamp) {
@@ -364,20 +370,21 @@ export class Game {
 		this.#now = time;
 		this.#elapsed += this.#now - (this.#then ?? 0);
 		
-		const direction = this.#direction;
+		const iterating = this.#elapsed >= this.#level.delay;
 		
-		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		if (iterating) {
+			this.#bgCtx.clearRect(0, 0, this.#bgCtx.canvas.width, this.#bgCtx.canvas.height);
 		}
+		this.#fgCtx.clearRect(0, 0, this.#fgCtx.canvas.width, this.#fgCtx.canvas.height);
 
 		// advancement pourcentage of the frame (between 0 and 1)
 		const delta = Math.min(1, this.#elapsed / this.#level.delay) - 1;
 		
-		this.#drawMap(delta);
+		this.#drawMap(delta, iterating);
 
 		let gameOver = false;
 		
-		if (this.#elapsed >= this.#level.delay) {
+		if (iterating) {
 			
 			if (this.#then === undefined) {
 				console.log("First render");
@@ -390,7 +397,7 @@ export class Game {
 			this.#elapsed = 0;
 			this.#treated = true;
 			
-			gameOver = !this.#iterate(direction);
+			gameOver = !this.#iterate(this.#direction);
 		}
 
 		this.#then = this.#now;

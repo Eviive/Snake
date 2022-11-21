@@ -13,7 +13,7 @@ export class SnakeSprite implements SpriteHandler<SnakeSpriteType> {
 		this.#height = height;
 	}
 
-	static async load(fileName: string, width: number, height: number): Promise<SnakeSprite> {
+	static async load(fileName: string, width: number, height: number = width): Promise<SnakeSprite> {
 		const image = new Image();
 		
 		image.src = `assets/images/${fileName}`;
