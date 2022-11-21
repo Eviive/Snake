@@ -129,20 +129,51 @@ export class Game {
 		this.#map = create2DArray(width, height, Tile.Empty);
 
 		for (const [x, y] of walls) {
+			if (this.#isOutOfBounds(x, y)) {
+				throw new Error(`Wall at (${x}, ${y}) is out of bounds`);
+			}
 			this.#map[y][x] = Tile.Wall;
 		}
 
 		if (snake.length < 2) {
 			throw new Error("The snake must have at least a head and a tail");
 		}
+
+		const [headX, headY] = snake[0];
+		const [tailX, tailY] = snake.at(-1)!;
+
+		if (headX !== tailX && headY !== tailY) {
+			throw new Error("The snake must be in a straight line");
+		}
+
+		if (headX === tailX) {
+			if (Math.abs(headY - tailY) !== snake.length - 1) {
+				throw new Error("The snake must be in one piece");
+			}
+		} else {
+			if (Math.abs(headX - tailX) !== snake.length - 1) {
+				throw new Error("The snake must be in one piece");
+			}
+		}
 		
-		const head = snake.shift()!;
-		this.#map[head[1]][head[0]] = Tile.SnakeHead;
-		Snake.addPart(head, this.#direction);
-		
-		for (const [x, y] of snake) {
-			this.#map[y][x] = Tile.SnakeBody;
-			Snake.addPart([x, y], this.#direction);
+		for (let i = 0; i < snake.length; i++) {
+			const x = snake[i][0];
+			const y = snake[i][1];
+			
+			if (this.#isOutOfBounds(x, y)) {
+				throw new Error(`Snake part at (${x}, ${y}) is out of bounds`);
+			}
+
+			if (this.#map[y][x] !== Tile.Empty) {
+				throw new Error(`Snake part at (${x}, ${y}) is not on an empty tile`);
+			}
+			
+			if (i === 0) {
+				this.#map[y][x] = Tile.SnakeHead;
+			} else {
+				this.#map[y][x] = Tile.SnakeBody;
+			}
+			Snake.addPart(snake[i], this.#direction);
 		}
 
 		this.#generateFood();
@@ -187,6 +218,12 @@ export class Game {
 		return tile;
 	}
 
+	#isOutOfBounds(x: number, y: number) {
+		const { dimensions: [width, height] } = this.#level;
+
+		return x < 0 || x >= width || y < 0 || y >= height;
+	}
+
 	#generateFood() {
 		const newFood = this.#getRandomEmptyTile();
 		this.#map[newFood[1]][newFood[0]] = Tile.Food;
@@ -195,7 +232,7 @@ export class Game {
 	#write(text: string) {
 		const middleX = this.#bgCtx.canvas.width / 2;
 		const middleY = this.#bgCtx.canvas.height / 2;
-		const fontSize = this.#bgCtx.canvas.width / 10;
+		const fontSize = this.#bgCtx.canvas.width / 7;
 		const RGBValue = 255;
 		const alpha = .5;
 		
@@ -206,8 +243,6 @@ export class Game {
 	}
 
 	#iterate(direction: Direction): boolean {
-		const { dimensions: [width, height] } = this.#level;
-		
 		const [x, y] = Snake.getHead().coordinates;
 		
 		let newX = x;
@@ -231,10 +266,10 @@ export class Game {
 				break;
 			
 			default:
-				throw new Error(`Unknown direction ${direction}`);
+				throw new Error(`Unknown direction: ${direction}`);
 		}
 		
-		if (newX < 0 || newX >= width || newY < 0 || newY >= height) {
+		if (this.#isOutOfBounds(newX, newY)) {
 			this.#cleanup();
 			return false;
 		}
