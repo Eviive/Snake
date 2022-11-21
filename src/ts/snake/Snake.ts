@@ -46,6 +46,14 @@ export class Snake {
 		}
 	}
 
+	getPreviousPart() {
+		return Snake.#parts[Snake.#parts.indexOf(this) - 1];
+	}
+	
+	getNextPart() {
+		return Snake.#parts[Snake.#parts.indexOf(this) + 1];
+	}
+
 	static addPart(coordinates: Coordinates, direction: Direction, unshift: boolean = false): number {
 		const part = new this(coordinates, direction);
 		
@@ -86,22 +94,68 @@ export class Snake {
 
 	#drawPart(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, x: number, y: number, width: number, height: number, partType: SnakePartType): void {		
 		let spriteType;
-
-		switch (partType) { // switch with multiple paramters SO HELP ?
-			case SnakePartType.Head:
-				spriteType = SnakeSpriteType.HeadUp; // TODO: determine right sprite
-				break;
-			
-			case SnakePartType.Body:
-				spriteType = SnakeSpriteType.BodyVertical; // TODO: determine right sprite
-				break;
-
-			case SnakePartType.Tail:
-				spriteType = SnakeSpriteType.TailDown; // TODO: determine right sprite
-				break;
+		
+		if (partType === SnakePartType.Head) {
+			switch (this.#direction) {
+				case Direction.Up:
+					spriteType = SnakeSpriteType.HeadUp;
+					break;
 				
-			default:
-				throw new Error(`Unknown snake part type ${partType}`);
+				case Direction.Right:
+					spriteType = SnakeSpriteType.HeadRight;
+					break;
+
+				case Direction.Down:
+					spriteType = SnakeSpriteType.HeadDown;
+					break;
+
+				case Direction.Left:
+					spriteType = SnakeSpriteType.HeadLeft;
+					break;
+			
+				default:
+					throw new Error(`Unknown direction: ${this.#direction}`);
+			}
+		} else if (partType === SnakePartType.Body) {
+			switch (this.#direction) {
+				case Direction.Up:
+				case Direction.Down:
+					spriteType = SnakeSpriteType.BodyVertical;
+					break;
+
+				case Direction.Right:
+				case Direction.Left:
+					spriteType = SnakeSpriteType.BodyHorizontal;
+					break;
+			
+				default:
+					throw new Error(`Unknown direction: ${this.#direction}`);
+			}
+		} else if (partType === SnakePartType.Tail) {
+			const previousDirection = this.getPreviousPart().#direction;
+
+			switch (previousDirection) {
+				case Direction.Up:
+					spriteType = SnakeSpriteType.TailDown;
+					break;
+
+				case Direction.Right:
+					spriteType = SnakeSpriteType.TailLeft;
+					break;
+
+				case Direction.Down:
+					spriteType = SnakeSpriteType.TailUp;
+					break;
+
+				case Direction.Left:
+					spriteType = SnakeSpriteType.TailRight;
+					break;
+
+				default:
+					throw new Error(`Unknown direction: ${previousDirection}`);
+			}
+		} else {
+			throw new Error(`Unknown snake part type: ${partType}`);
 		}
 
 		sprite.drawSprite(ctx, spriteType, { x, y, width, height });
