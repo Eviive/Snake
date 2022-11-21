@@ -27,7 +27,7 @@ export const game = (level: number) => {
 	};
 
 	const onUnmount = () => {
-		snake?.stop();
+		snake?.close();
 	};
 	
 	displayPage("#level-template", { onMount, afterMount, onUnmount });

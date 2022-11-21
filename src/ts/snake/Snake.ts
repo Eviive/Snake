@@ -128,7 +128,7 @@ export class Snake {
 					throw new Error(`Unknown direction: ${this.#direction}`);
 			}
 		} else if (partType === SnakePartType.Tail) {
-			const previousDirection = this.#getPreviousPart().#direction;
+			const previousDirection = this.#getPreviousPart().#direction; // weird but i'll see when i implement corners
 
 			switch (previousDirection) {
 				case Direction.Up:

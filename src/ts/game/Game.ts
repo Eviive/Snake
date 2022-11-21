@@ -174,9 +174,9 @@ export class Game {
 	}
 
 	#resize() {
-		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-			ctx.canvas.width = 0;
-			ctx.canvas.height = 0;
+		for (const { canvas } of [this.#bgCtx, this.#fgCtx]) {
+			canvas.width = 0;
+			canvas.height = 0;
 		}
 		
 		const parent = this.#bgCtx.canvas.parentElement;
@@ -195,9 +195,9 @@ export class Game {
 			canvasWidth = canvasHeight * ratio;
 		}
 
-		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-			ctx.canvas.width = canvasWidth;
-			ctx.canvas.height = canvasHeight;
+		for (const { canvas } of [this.#bgCtx, this.#fgCtx]) {
+			canvas.width = canvasWidth;
+			canvas.height = canvasHeight;
 		}
 	}
 
@@ -264,14 +264,14 @@ export class Game {
 		}
 		
 		if (this.#isOutOfBounds(newX, newY)) {
-			this.stop();
+			this.gameOver();
 			return false;
 		}
 
 		let tile = this.#map[newY][newX];
 		
 		if (tile === Tile.Wall) {
-			this.stop();
+			this.gameOver();
 			return false;
 		}
 
@@ -285,13 +285,13 @@ export class Game {
 		}
 
 		tile = this.#map[newY][newX];
-
+		
 		if (tile === Tile.SnakeBody) {
 			if (tail) {
 				Snake.parts.push(tail); // TODO: pas de surcharge bruh
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
-			this.stop();
+			this.gameOver();
 			return false;
 		}
 
@@ -309,13 +309,13 @@ export class Game {
 
 	#drawMap(delta: number = 0, iterating: boolean = true) {
 		const { dimensions: [width, height] } = this.#level;
-
+		
 		const cellWidth = this.#bgCtx.canvas.width / width;
 		const cellHeight = this.#bgCtx.canvas.height / height;
 		
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
-
+				
 				const cell = this.#map[y][x];
 				
 				if (iterating) {
@@ -401,10 +401,14 @@ export class Game {
 		}
 	}
 
-	stop() { // TODO: do a real cleanup, remove all the events
+	gameOver() { // TODO: do a real cleanup, remove all the events
 		if (this.#frame) {
 			cancelAnimationFrame(this.#frame);
 		}
+	}
+
+	close() {
+		this.gameOver();
 		Snake.reset();
 	}
 	
