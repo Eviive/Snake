@@ -25,33 +25,16 @@ export class Snake {
 		return this.#direction;
 	}
 	
+	static reset() {
+		this.#parts = [];
+	}
+
 	static getHead() {
 		return this.#parts[0];
 	}
 
 	static removeLast() {
 		return this.#parts.pop()!; // TODO: remove bangs in whole project
-	}
-
-	#getType(): SnakePartType {
-		switch (Snake.#parts.indexOf(this)) {
-			case 0:
-				return SnakePartType.Head;
-		
-			case Snake.#parts.length - 1:
-				return SnakePartType.Tail;
-				
-			default:
-				return SnakePartType.Body;
-		}
-	}
-
-	getPreviousPart() {
-		return Snake.#parts[Snake.#parts.indexOf(this) - 1];
-	}
-	
-	getNextPart() {
-		return Snake.#parts[Snake.#parts.indexOf(this) + 1];
 	}
 
 	static addPart(coordinates: Coordinates, direction: Direction, unshift: boolean = false): number {
@@ -65,6 +48,19 @@ export class Snake {
 
 	static findPart([x, y]: Coordinates) {
 		return this.#parts.find(part => part.coordinates[0] === x && part.coordinates[1] === y)
+	}
+
+	#getType(): SnakePartType {
+		switch (Snake.#parts.indexOf(this)) {
+			case 0:
+				return SnakePartType.Head;
+		
+			case Snake.#parts.length - 1:
+				return SnakePartType.Tail;
+				
+			default:
+				return SnakePartType.Body;
+		}
 	}
 
 	#adjustCoordinates([x, y]: Coordinates, delta: number, direction: Direction): Coordinates {
@@ -132,7 +128,7 @@ export class Snake {
 					throw new Error(`Unknown direction: ${this.#direction}`);
 			}
 		} else if (partType === SnakePartType.Tail) {
-			const previousDirection = this.getPreviousPart().#direction;
+			const previousDirection = this.#getPreviousPart().#direction;
 
 			switch (previousDirection) {
 				case Direction.Up:
@@ -159,6 +155,14 @@ export class Snake {
 		}
 
 		sprite.drawSprite(ctx, spriteType, { x, y, width, height });
+	}
+
+	#getPreviousPart() {
+		return Snake.#parts[Snake.#parts.indexOf(this) - 1];
+	}
+	
+	#getNextPart() {
+		return Snake.#parts[Snake.#parts.indexOf(this) + 1];
 	}
 
 	draw(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, width: number, height: number, delta: number): void {

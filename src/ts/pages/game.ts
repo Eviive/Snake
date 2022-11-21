@@ -18,11 +18,17 @@ export const game = (level: number) => {
 		}
 	};
 
+	let snake: Game | null = null;
+
 	const afterMount = async () => {
-		const snake = await Game.builder(level);
+		snake = await Game.builder(level);
 		
 		snake.run();
 	};
+
+	const onUnmount = () => {
+		snake?.stop();
+	};
 	
-	displayPage("#level-template", { onMount, afterMount });
+	displayPage("#level-template", { onMount, afterMount, onUnmount });
 };

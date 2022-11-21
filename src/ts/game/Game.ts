@@ -116,12 +116,6 @@ export class Game {
 			Game.#isBuilding = false;
 		}
 	}
-	
-	#cleanup() { // TODO: do a real cleanup, remove all the events
-		if (this.#frame) {
-			cancelAnimationFrame(this.#frame);
-		}
-	}
 
 	#createLevel() {
 		const { dimensions: [width, height], walls, snake } = this.#level;
@@ -270,14 +264,14 @@ export class Game {
 		}
 		
 		if (this.#isOutOfBounds(newX, newY)) {
-			this.#cleanup();
+			this.stop();
 			return false;
 		}
 
 		let tile = this.#map[newY][newX];
 		
 		if (tile === Tile.Wall) {
-			this.#cleanup();
+			this.stop();
 			return false;
 		}
 
@@ -297,7 +291,7 @@ export class Game {
 				Snake.parts.push(tail); // TODO: pas de surcharge bruh
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
-			this.#cleanup();
+			this.stop();
 			return false;
 		}
 
@@ -407,6 +401,13 @@ export class Game {
 		}
 	}
 
+	stop() { // TODO: do a real cleanup, remove all the events
+		if (this.#frame) {
+			cancelAnimationFrame(this.#frame);
+		}
+		Snake.reset();
+	}
+	
 	run() {
 		requestAnimationFrame(time => this.#render(time));
 	}
