@@ -114,7 +114,7 @@ export class Game {
 					newDirection = Direction.Left;
 					break;
 			}
-			if (newDirection && -newDirection !== this.#direction) {
+			if (newDirection && Math.abs(newDirection) !== this.#direction) {
 				this.#direction = newDirection;
 				this.#treated = false;
 			}
