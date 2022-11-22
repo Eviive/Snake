@@ -24,6 +24,8 @@ export class Game {
 
 	#direction: Direction = Direction.Up;
 	#treated: boolean = true;
+
+	onGameOver?: (score: number, goal?: number) => void;
 	
 	constructor(level: LevelFile, sprite: SnakeSprite) {
 		if (!Game.#isBuilding) {
@@ -57,6 +59,33 @@ export class Game {
 		};
 		window.addEventListener("resize", resizeHandler);
 
+		this.#init();
+	}
+
+	static async builder(levelId: number) {
+		Game.#isBuilding = true;
+		try {
+			const res = await Promise.all([
+				SnakeSprite.load("sprite-sheet.png", 64),
+				import(`../../assets/levels/level-${levelId}.json`, {
+					assert: { type: "json" }
+				})
+			]);
+
+			const [sprite, module] = res;
+			
+			const level = module.default as LevelFile;
+			
+			return new this(level, sprite);
+		} catch (e) {
+			console.error(e);
+			throw new Error(`Couldn't build the level ${levelId}`, { cause: e });
+		} finally {
+			Game.#isBuilding = false;
+		}
+	}
+
+	#init() {
 		this.#createLevel();
 
 		const keydownHandler = (e: KeyboardEvent) => {
@@ -91,29 +120,6 @@ export class Game {
 			}
 		};
 		window.addEventListener("keydown", keydownHandler);
-	}
-
-	static async builder(levelId: number) {
-		Game.#isBuilding = true;
-		try {
-			const res = await Promise.all([
-				SnakeSprite.load("sprite-sheet.png", 64),
-				import(`../../assets/levels/level-${levelId}.json`, {
-					assert: { type: "json" }
-				})
-			]);
-
-			const [sprite, module] = res;
-			
-			const level = module.default as LevelFile;
-			
-			return new this(level, sprite);
-		} catch (e) {
-			console.error(e);
-			throw new Error(`Couldn't build the level ${levelId}`, { cause: e });
-		} finally {
-			Game.#isBuilding = false;
-		}
 	}
 
 	#createLevel() {
@@ -239,7 +245,7 @@ export class Game {
 		const middleY = this.#bgCtx.canvas.height / 2;
 		const fontSize = this.#bgCtx.canvas.width / 7;
 		const RGBValue = 255;
-		const alpha = .5;
+		const alpha = .75;
 		
 		this.#bgCtx.fillStyle = `rgba(${RGBValue}, ${RGBValue}, ${RGBValue}, ${alpha})`;
 		this.#bgCtx.font = `bold ${fontSize}px 'Inter', 'Open Sans', sans-serif`;
@@ -417,11 +423,23 @@ export class Game {
 		if (this.#frame) {
 			cancelAnimationFrame(this.#frame);
 		}
+		this.onGameOver?.(this.#score, this.#level?.goal);
 	}
 
 	close() {
 		this.gameOver();
 		Snake.reset();
+	}
+	
+	restart() {
+		Snake.reset();
+		this.#score = 0;
+		this.#then = undefined;
+		this.#now = undefined;
+		this.#elapsed = 0;
+		this.#treated = true;
+		this.#init();
+		this.run();
 	}
 	
 	run() {

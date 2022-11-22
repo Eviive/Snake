@@ -3,6 +3,7 @@ export type Coordinates = [number, number];
 export interface LevelFile {
 	dimensions: Coordinates;
 	delay: number;
+	goal: number;
 	walls: Coordinates[];
 	snake: Coordinates[];
 }

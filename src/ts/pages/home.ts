@@ -6,5 +6,5 @@ export const home = () => {
 		root.className = "home";
 	};
 	
-	displayPage("#home-template", { onMount });
+	displayPage("home-template", { onMount });
 };

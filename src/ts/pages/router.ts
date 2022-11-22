@@ -20,20 +20,26 @@ export const router = () => {
 	}
 };
 
-export const displayPage = (template: string, callbacks: CallbackFunctions = {}) => {
+export const displayPage = (templateId: string, callbacks: CallbackFunctions = {}) => {
 	const root = document.querySelector("#root");
 
-	const pageTemplate = document.querySelector(template);
-
-	if (root && pageTemplate instanceof HTMLTemplateElement) {
-		const pageFragment = pageTemplate.content;
-		
-		callbacks.onMount?.(root, pageFragment);
-		
-		root.replaceChildren(pageFragment.cloneNode(true));
-		
-		callbacks.afterMount?.();
-
-		lastPage = callbacks;
+	if (!root) {
+		throw new Error("Root element not found");
 	}
+	
+	const pageTemplate = document.querySelector<HTMLTemplateElement>(`template#${templateId}`);
+	
+	if (!pageTemplate) {
+		throw new Error(`Template #${templateId} not found`);
+	}
+	
+	const pageFragment = pageTemplate.content;
+	
+	callbacks.onMount?.(root, pageFragment);
+	
+	root.replaceChildren(pageFragment.cloneNode(true));
+	
+	callbacks.afterMount?.(root);
+
+	lastPage = callbacks;
 };
