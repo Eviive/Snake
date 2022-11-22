@@ -22,7 +22,7 @@ export class Game {
 	#score: number = 0;
 	#sprite: SnakeSprite;
 
-	#direction: Direction;
+	#direction: Direction = Direction.Up;
 	#treated: boolean = true;
 	
 	constructor(level: LevelFile, sprite: SnakeSprite) {
@@ -48,7 +48,6 @@ export class Game {
 		this.#fgCtx = fgCtx;
 
 		this.#level = level;
-		this.#direction = level.direction;
 		this.#sprite = sprite;
 
 		this.#resize();
@@ -136,7 +135,19 @@ export class Game {
 		const [headX, headY] = snake[0];
 		const [tailX, tailY] = snake.at(-1)!;
 
-		if (headX !== tailX && headY !== tailY) {
+		if (headX === tailX) {
+			if (headY < tailY) {
+				this.#direction = Direction.Up;
+			} else {
+				this.#direction = Direction.Down;
+			}
+		} else if (headY === tailY) {
+			if (headX < tailX) {
+				this.#direction = Direction.Left;
+			} else {
+				this.#direction = Direction.Right;
+			}
+		} else {
 			throw new Error("The snake must be in a straight line");
 		}
 
@@ -359,7 +370,7 @@ export class Game {
 	}
 	
 	#render(time: DOMHighResTimeStamp) {
-		console.log("render");
+		console.info("render");
 		
 		this.#now = time;
 		this.#elapsed += this.#now - (this.#then ?? 0);
@@ -382,11 +393,11 @@ export class Game {
 		if (iterating) {
 			
 			if (this.#then === undefined) {
-				console.log("First render");
+				console.info("First render");
 			} else if (this.#elapsed > this.#level.delay + 30) {
 				console.warn(`Game loop is taking too long, skipping ${Math.round(this.#elapsed - this.#level.delay)}ms`);
 			} else {
-				console.log(`Iterating, last iteration was ${Math.round(this.#elapsed)}ms ago`);
+				console.info(`Iterating, last iteration was ${Math.round(this.#elapsed)}ms ago`);
 			}
 
 			this.#elapsed = 0;
