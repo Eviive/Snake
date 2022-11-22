@@ -7,6 +7,11 @@
 		"outDir": "./public/js",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"strict": true
+		"strict": true,
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true
 	}
 }

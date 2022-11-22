@@ -174,10 +174,6 @@ export class Snake {
 	#getPreviousPart() {
 		return Snake.#parts[Snake.#parts.indexOf(this) - 1];
 	}
-	
-	#getNextPart() {
-		return Snake.#parts[Snake.#parts.indexOf(this) + 1];
-	}
 
 	draw(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, width: number, height: number, delta: number): void {
 		let [x, y] = this.#adjustCoordinates(this.#coordinates, delta, this.#direction);
