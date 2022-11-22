@@ -13,18 +13,14 @@ export class Snake {
 		this.#direction = direction;
 	}
 
-	static get parts() { // don't need that if i manage to overcome overload
-		return this.#parts;
-	}
-
-	get coordinates() { // need that for iterating I think, maybe I can manage to remove it and do the iteration here
+	get coordinates() { // need that for iterating I think, maybe I can manage to remove it and do the iteration here (move())
 		return this.#coordinates;
 	}
 
 	get direction() {
 		return this.#direction;
 	}
-	
+
 	static reset() {
 		this.#parts = [];
 	}
@@ -113,20 +109,38 @@ export class Snake {
 					throw new Error(`Unknown direction: ${this.#direction}`);
 			}
 		} else if (partType === SnakePartType.Body) {
-			switch (this.#direction) {
-				case Direction.Up:
-				case Direction.Down:
-					spriteType = SnakeSpriteType.BodyVertical;
-					break;
+			const previousDirection = this.#getPreviousPart().direction;
+			const thisDirection = this.#direction;
 
-				case Direction.Right:
-				case Direction.Left:
-					spriteType = SnakeSpriteType.BodyHorizontal;
-					break;
-			
-				default:
-					throw new Error(`Unknown direction: ${this.#direction}`);
+			if ((previousDirection === Direction.Up && thisDirection === Direction.Up) || (previousDirection === Direction.Down && thisDirection === Direction.Down)) {
+				
+				spriteType = SnakeSpriteType.BodyVertical;
+
+			} else if ((previousDirection === Direction.Left && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Right)) {
+				
+				spriteType = SnakeSpriteType.BodyHorizontal;
+
+			} else if ((previousDirection === Direction.Up && thisDirection === Direction.Right) || (previousDirection === Direction.Left && thisDirection === Direction.Down)) {
+				
+				spriteType = SnakeSpriteType.BodyTopLeft;
+
+			} else if ((previousDirection === Direction.Up && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Down)) {
+				
+				spriteType = SnakeSpriteType.BodyTopRight;
+
+			} else if ((previousDirection === Direction.Down && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Up)) {
+				
+				spriteType = SnakeSpriteType.BodyBottomRight;
+
+			} else if ((previousDirection === Direction.Down && thisDirection === Direction.Right) || (previousDirection === Direction.Left && thisDirection === Direction.Up)) {
+				
+				spriteType = SnakeSpriteType.BodyBottomLeft;
+
+			} else {
+				throw new Error(`Unknown corner directions: ${previousDirection} and ${thisDirection}`);
 			}
+			
+			
 		} else if (partType === SnakePartType.Tail) {
 			const previousDirection = this.#getPreviousPart().#direction; // weird but i'll see when i implement corners
 

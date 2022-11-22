@@ -288,7 +288,7 @@ export class Game {
 		
 		if (tile === Tile.SnakeBody) {
 			if (tail) {
-				Snake.parts.push(tail); // TODO: pas de surcharge bruh
+				Snake.addPart(tail.coordinates, tail.direction);
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
 			this.gameOver();
@@ -364,7 +364,7 @@ export class Game {
 		this.#now = time;
 		this.#elapsed += this.#now - (this.#then ?? 0);
 		
-		const iterating = this.#elapsed >= this.#level.delay;
+		const iterating = this.#then === undefined || this.#elapsed >= this.#level.delay;
 		
 		if (iterating) {
 			this.#bgCtx.clearRect(0, 0, this.#bgCtx.canvas.width, this.#bgCtx.canvas.height);
@@ -372,7 +372,8 @@ export class Game {
 		this.#fgCtx.clearRect(0, 0, this.#fgCtx.canvas.width, this.#fgCtx.canvas.height);
 
 		// advancement pourcentage of the frame (between 0 and 1)
-		const delta = Math.min(1, this.#elapsed / this.#level.delay) - 1;
+		const delta = Math.min(1, this.#elapsed / this.#level.delay) - 1; // smooth animation
+		// const delta = 0; // no animation
 		
 		this.#drawMap(delta, iterating);
 
