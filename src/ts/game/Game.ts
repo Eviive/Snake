@@ -22,7 +22,7 @@ export class Game {
 	#score: number = 0;
 	#sprite: SnakeSprite;
 
-	#direction: Direction;
+	#direction: Direction = Direction.Up;
 	#treated: boolean = true;
 	
 	constructor(level: LevelFile, sprite: SnakeSprite) {
@@ -48,7 +48,6 @@ export class Game {
 		this.#fgCtx = fgCtx;
 
 		this.#level = level;
-		this.#direction = level.direction;
 		this.#sprite = sprite;
 
 		this.#resize();
@@ -98,7 +97,7 @@ export class Game {
 		Game.#isBuilding = true;
 		try {
 			const res = await Promise.all([
-				SnakeSprite.load("sprite-sheet.png", 64, 64),
+				SnakeSprite.load("sprite-sheet.png", 64),
 				import(`../../assets/levels/level-${levelId}.json`, {
 					assert: { type: "json" }
 				})
@@ -116,12 +115,6 @@ export class Game {
 			Game.#isBuilding = false;
 		}
 	}
-	
-	#cleanup() { // TODO: do a real cleanup, remove all the events
-		if (this.#frame) {
-			cancelAnimationFrame(this.#frame);
-		}
-	}
 
 	#createLevel() {
 		const { dimensions: [width, height], walls, snake } = this.#level;
@@ -129,29 +122,72 @@ export class Game {
 		this.#map = create2DArray(width, height, Tile.Empty);
 
 		for (const [x, y] of walls) {
+			if (this.#isOutOfBounds(x, y)) {
+				throw new Error(`Wall at (${x}, ${y}) is out of bounds`);
+			}
 			this.#map[y][x] = Tile.Wall;
 		}
 
 		if (snake.length < 2) {
 			throw new Error("The snake must have at least a head and a tail");
 		}
+
+		const [headX, headY] = snake[0];
+		const [tailX, tailY] = snake.at(-1)!;
+
+		if (headX === tailX) {
+			if (headY < tailY) {
+				this.#direction = Direction.Up;
+			} else {
+				this.#direction = Direction.Down;
+			}
+		} else if (headY === tailY) {
+			if (headX < tailX) {
+				this.#direction = Direction.Left;
+			} else {
+				this.#direction = Direction.Right;
+			}
+		} else {
+			throw new Error("The snake must be in a straight line");
+		}
+
+		if (headX === tailX) {
+			if (Math.abs(headY - tailY) !== snake.length - 1) {
+				throw new Error("The snake must be in one piece");
+			}
+		} else {
+			if (Math.abs(headX - tailX) !== snake.length - 1) {
+				throw new Error("The snake must be in one piece");
+			}
+		}
 		
-		const head = snake.shift()!;
-		this.#map[head[1]][head[0]] = Tile.SnakeHead;
-		Snake.addPart(head, this.#direction);
-		
-		for (const [x, y] of snake) {
-			this.#map[y][x] = Tile.SnakeBody;
-			Snake.addPart([x, y], this.#direction);
+		for (let i = 0; i < snake.length; i++) {
+			const x = snake[i][0];
+			const y = snake[i][1];
+			
+			if (this.#isOutOfBounds(x, y)) {
+				throw new Error(`Snake part at (${x}, ${y}) is out of bounds`);
+			}
+
+			if (this.#map[y][x] !== Tile.Empty) {
+				throw new Error(`Snake part at (${x}, ${y}) is not on an empty tile`);
+			}
+			
+			if (i === 0) {
+				this.#map[y][x] = Tile.SnakeHead;
+			} else {
+				this.#map[y][x] = Tile.SnakeBody;
+			}
+			Snake.addPart(snake[i], this.#direction);
 		}
 
 		this.#generateFood();
 	}
 
 	#resize() {
-		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-			ctx.canvas.width = 0;
-			ctx.canvas.height = 0;
+		for (const { canvas } of [this.#bgCtx, this.#fgCtx]) {
+			canvas.width = 0;
+			canvas.height = 0;
 		}
 		
 		const parent = this.#bgCtx.canvas.parentElement;
@@ -170,9 +206,9 @@ export class Game {
 			canvasWidth = canvasHeight * ratio;
 		}
 
-		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-			ctx.canvas.width = canvasWidth;
-			ctx.canvas.height = canvasHeight;
+		for (const { canvas } of [this.#bgCtx, this.#fgCtx]) {
+			canvas.width = canvasWidth;
+			canvas.height = canvasHeight;
 		}
 	}
 
@@ -187,6 +223,12 @@ export class Game {
 		return tile;
 	}
 
+	#isOutOfBounds(x: number, y: number) {
+		const { dimensions: [width, height] } = this.#level;
+
+		return x < 0 || x >= width || y < 0 || y >= height;
+	}
+
 	#generateFood() {
 		const newFood = this.#getRandomEmptyTile();
 		this.#map[newFood[1]][newFood[0]] = Tile.Food;
@@ -195,7 +237,7 @@ export class Game {
 	#write(text: string) {
 		const middleX = this.#bgCtx.canvas.width / 2;
 		const middleY = this.#bgCtx.canvas.height / 2;
-		const fontSize = this.#bgCtx.canvas.width / 10;
+		const fontSize = this.#bgCtx.canvas.width / 7;
 		const RGBValue = 255;
 		const alpha = .5;
 		
@@ -206,8 +248,6 @@ export class Game {
 	}
 
 	#iterate(direction: Direction): boolean {
-		const { dimensions: [width, height] } = this.#level;
-		
 		const [x, y] = Snake.getHead().coordinates;
 		
 		let newX = x;
@@ -231,18 +271,18 @@ export class Game {
 				break;
 			
 			default:
-				throw new Error(`Unknown direction ${direction}`);
+				throw new Error(`Unknown direction: ${direction}`);
 		}
 		
-		if (newX < 0 || newX >= width || newY < 0 || newY >= height) {
-			this.#cleanup();
+		if (this.#isOutOfBounds(newX, newY)) {
+			this.gameOver();
 			return false;
 		}
 
 		let tile = this.#map[newY][newX];
 		
 		if (tile === Tile.Wall) {
-			this.#cleanup();
+			this.gameOver();
 			return false;
 		}
 
@@ -256,13 +296,13 @@ export class Game {
 		}
 
 		tile = this.#map[newY][newX];
-
+		
 		if (tile === Tile.SnakeBody) {
 			if (tail) {
-				Snake.parts.push(tail); // TODO: pas de surcharge bruh
+				Snake.addPart(tail.coordinates, tail.direction);
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
-			this.#cleanup();
+			this.gameOver();
 			return false;
 		}
 
@@ -278,23 +318,27 @@ export class Game {
 		return true;
 	}
 
-	#drawMap(delta: number = 0) {
+	#drawMap(delta: number = 0, iterating: boolean = true) {
 		const { dimensions: [width, height] } = this.#level;
-
+		
 		const cellWidth = this.#bgCtx.canvas.width / width;
 		const cellHeight = this.#bgCtx.canvas.height / height;
 		
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
-
+				
 				const cell = this.#map[y][x];
 				
-				const color = (x + y) % 2 === 0 ? "#494351" : "#443e4c";
-				new Square(x * cellWidth, y * cellHeight, color, cellWidth).draw(this.#bgCtx);
+				if (iterating) {
+					const color = (x + y) % 2 === 0 ? "#494351" : "#443e4c";
+					new Square(x * cellWidth, y * cellHeight, color, cellWidth).draw(this.#bgCtx);
+				}
 
 				switch (cell) {
 					case Tile.Wall:
-						new Square(x * cellWidth, y * cellHeight, "gray", cellWidth).draw(this.#bgCtx);
+						if (iterating) {
+							new Square(x * cellWidth, y * cellHeight, "gray", cellWidth).draw(this.#bgCtx);
+						}
 						break;
 
 					case Tile.Food:
@@ -320,42 +364,46 @@ export class Game {
 			}
 		}
 
-		this.#write(this.#score.toString());
+		if (iterating) {
+			this.#write(this.#score.toString());
+		}
 	}
 	
 	#render(time: DOMHighResTimeStamp) {
-		console.log("render");
+		console.info("render");
 		
 		this.#now = time;
 		this.#elapsed += this.#now - (this.#then ?? 0);
 		
-		const direction = this.#direction;
+		const iterating = this.#then === undefined || this.#elapsed >= this.#level.delay;
 		
-		for (const ctx of [this.#bgCtx, this.#fgCtx]) {
-			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		if (iterating) {
+			this.#bgCtx.clearRect(0, 0, this.#bgCtx.canvas.width, this.#bgCtx.canvas.height);
 		}
+		this.#fgCtx.clearRect(0, 0, this.#fgCtx.canvas.width, this.#fgCtx.canvas.height);
 
 		// advancement pourcentage of the frame (between 0 and 1)
-		const delta = Math.min(1, this.#elapsed / this.#level.delay) - 1;
+		const delta = Math.min(1, this.#elapsed / this.#level.delay) - 1; // smooth animation
+		// const delta = 0; // no animation
 		
-		this.#drawMap(delta);
+		this.#drawMap(delta, iterating);
 
 		let gameOver = false;
 		
-		if (this.#elapsed >= this.#level.delay) {
+		if (iterating) {
 			
 			if (this.#then === undefined) {
-				console.log("First render");
+				console.info("First render");
 			} else if (this.#elapsed > this.#level.delay + 30) {
 				console.warn(`Game loop is taking too long, skipping ${Math.round(this.#elapsed - this.#level.delay)}ms`);
 			} else {
-				console.log(`Iterating, last iteration was ${Math.round(this.#elapsed)}ms ago`);
+				console.info(`Iterating, last iteration was ${Math.round(this.#elapsed)}ms ago`);
 			}
 
 			this.#elapsed = 0;
 			this.#treated = true;
 			
-			gameOver = !this.#iterate(direction);
+			gameOver = !this.#iterate(this.#direction);
 		}
 
 		this.#then = this.#now;
@@ -365,6 +413,17 @@ export class Game {
 		}
 	}
 
+	gameOver() { // TODO: do a real cleanup, remove all the events
+		if (this.#frame) {
+			cancelAnimationFrame(this.#frame);
+		}
+	}
+
+	close() {
+		this.gameOver();
+		Snake.reset();
+	}
+	
 	run() {
 		requestAnimationFrame(time => this.#render(time));
 	}

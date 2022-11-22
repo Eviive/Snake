@@ -13,37 +13,24 @@ export class Snake {
 		this.#direction = direction;
 	}
 
-	static get parts() { // don't need that if i manage to overcome overload
-		return this.#parts;
-	}
-
-	get coordinates() { // need that for iterating I think, maybe I can manage to remove it and do the iteration here
+	get coordinates() { // need that for iterating I think, maybe I can manage to remove it and do the iteration here (move())
 		return this.#coordinates;
 	}
 
 	get direction() {
 		return this.#direction;
 	}
-	
+
+	static reset() {
+		this.#parts = [];
+	}
+
 	static getHead() {
 		return this.#parts[0];
 	}
 
 	static removeLast() {
 		return this.#parts.pop()!; // TODO: remove bangs in whole project
-	}
-
-	#getType(): SnakePartType {
-		switch (Snake.#parts.indexOf(this)) {
-			case 0:
-				return SnakePartType.Head;
-		
-			case Snake.#parts.length - 1:
-				return SnakePartType.Tail;
-				
-			default:
-				return SnakePartType.Body;
-		}
 	}
 
 	static addPart(coordinates: Coordinates, direction: Direction, unshift: boolean = false): number {
@@ -57,6 +44,19 @@ export class Snake {
 
 	static findPart([x, y]: Coordinates) {
 		return this.#parts.find(part => part.coordinates[0] === x && part.coordinates[1] === y)
+	}
+
+	#getType(): SnakePartType {
+		switch (Snake.#parts.indexOf(this)) {
+			case 0:
+				return SnakePartType.Head;
+		
+			case Snake.#parts.length - 1:
+				return SnakePartType.Tail;
+				
+			default:
+				return SnakePartType.Body;
+		}
 	}
 
 	#adjustCoordinates([x, y]: Coordinates, delta: number, direction: Direction): Coordinates {
@@ -86,25 +86,93 @@ export class Snake {
 
 	#drawPart(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, x: number, y: number, width: number, height: number, partType: SnakePartType): void {		
 		let spriteType;
-
-		switch (partType) { // switch with multiple paramters SO HELP ?
-			case SnakePartType.Head:
-				spriteType = SnakeSpriteType.HeadUp; // TODO: determine right sprite
-				break;
-			
-			case SnakePartType.Body:
-				spriteType = SnakeSpriteType.BodyVertical; // TODO: determine right sprite
-				break;
-
-			case SnakePartType.Tail:
-				spriteType = SnakeSpriteType.TailDown; // TODO: determine right sprite
-				break;
+		
+		if (partType === SnakePartType.Head) {
+			switch (this.#direction) {
+				case Direction.Up:
+					spriteType = SnakeSpriteType.HeadUp;
+					break;
 				
-			default:
-				throw new Error(`Unknown snake part type ${partType}`);
+				case Direction.Right:
+					spriteType = SnakeSpriteType.HeadRight;
+					break;
+
+				case Direction.Down:
+					spriteType = SnakeSpriteType.HeadDown;
+					break;
+
+				case Direction.Left:
+					spriteType = SnakeSpriteType.HeadLeft;
+					break;
+			
+				default:
+					throw new Error(`Unknown direction: ${this.#direction}`);
+			}
+		} else if (partType === SnakePartType.Body) {
+			const previousDirection = this.#getPreviousPart().direction;
+			const thisDirection = this.#direction;
+
+			if ((previousDirection === Direction.Up && thisDirection === Direction.Up) || (previousDirection === Direction.Down && thisDirection === Direction.Down)) {
+				
+				spriteType = SnakeSpriteType.BodyVertical;
+
+			} else if ((previousDirection === Direction.Left && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Right)) {
+				
+				spriteType = SnakeSpriteType.BodyHorizontal;
+
+			} else if ((previousDirection === Direction.Up && thisDirection === Direction.Right) || (previousDirection === Direction.Left && thisDirection === Direction.Down)) {
+				
+				spriteType = SnakeSpriteType.BodyTopLeft;
+
+			} else if ((previousDirection === Direction.Up && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Down)) {
+				
+				spriteType = SnakeSpriteType.BodyTopRight;
+
+			} else if ((previousDirection === Direction.Down && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Up)) {
+				
+				spriteType = SnakeSpriteType.BodyBottomRight;
+
+			} else if ((previousDirection === Direction.Down && thisDirection === Direction.Right) || (previousDirection === Direction.Left && thisDirection === Direction.Up)) {
+				
+				spriteType = SnakeSpriteType.BodyBottomLeft;
+
+			} else {
+				throw new Error(`Unknown corner directions: ${previousDirection} and ${thisDirection}`);
+			}
+			
+			
+		} else if (partType === SnakePartType.Tail) {
+			const previousDirection = this.#getPreviousPart().#direction; // weird but i'll see when i implement corners
+
+			switch (previousDirection) {
+				case Direction.Up:
+					spriteType = SnakeSpriteType.TailDown;
+					break;
+
+				case Direction.Right:
+					spriteType = SnakeSpriteType.TailLeft;
+					break;
+
+				case Direction.Down:
+					spriteType = SnakeSpriteType.TailUp;
+					break;
+
+				case Direction.Left:
+					spriteType = SnakeSpriteType.TailRight;
+					break;
+
+				default:
+					throw new Error(`Unknown direction: ${previousDirection}`);
+			}
+		} else {
+			throw new Error(`Unknown snake part type: ${partType}`);
 		}
 
 		sprite.drawSprite(ctx, spriteType, { x, y, width, height });
+	}
+
+	#getPreviousPart() {
+		return Snake.#parts[Snake.#parts.indexOf(this) - 1];
 	}
 
 	draw(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, width: number, height: number, delta: number): void {

@@ -1,5 +1,4 @@
 import { Game } from "../game/Game.js";
-import { SnakeSprite } from "../game/SnakeSprite.js";
 import { displayPage } from "./router.js";
 
 export const game = (level: number) => {
@@ -19,13 +18,17 @@ export const game = (level: number) => {
 		}
 	};
 
+	let snake: Game | null = null;
+
 	const afterMount = async () => {
-		await SnakeSprite.load("sprite-sheet.png", 64, 64);
-		
-		const snake = await Game.builder(level);
+		snake = await Game.builder(level);
 		
 		snake.run();
 	};
+
+	const onUnmount = () => {
+		snake?.close();
+	};
 	
-	displayPage("#level-template", { onMount, afterMount });
+	displayPage("#level-template", { onMount, afterMount, onUnmount });
 };
