@@ -25,8 +25,13 @@ export enum Direction {
 }
 
 /*
-	the sprite sheet is 5x4 :
+	the sprite sheet is 6x4 :
 	
+	0  1  2  3  4  5
+	6  7  8  9  10 11
+	12 13 14 15 16 17
+	18 19 20 21 22 23
+
 	0  1  2  3  4
 	5  6  7  8  9
 	10 11 12 13 14
@@ -35,19 +40,23 @@ export enum Direction {
 export enum SnakeSpriteType {
 	HeadUp = 3,
 	HeadRight = 4,
-	HeadDown = 9,
-	HeadLeft = 8,
-	BodyVertical = 7,
+	HeadDown = 10,
+	HeadLeft = 9,
+	HeadDeadUp = 5,
+	HeadDeadRight = 17,
+	HeadDeadDown = 11,
+	HeadDeadLeft = 23,
+	BodyVertical = 8,
 	BodyHorizontal = 1,
-	BodyTopLeft = 12,
-	BodyTopRight = 5,
+	BodyTopLeft = 14,
+	BodyTopRight = 6,
 	BodyBottomLeft = 2,
 	BodyBottomRight = 0,
-	TailUp = 19,
-	TailRight = 18,
-	TailDown = 13,
-	TailLeft = 14,
-	Food = 15
+	TailUp = 22,
+	TailRight = 21,
+	TailDown = 15,
+	TailLeft = 16,
+	Food = 18
 }
 
 export enum SnakePartType {

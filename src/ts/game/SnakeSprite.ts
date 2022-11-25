@@ -25,15 +25,15 @@ export class SnakeSprite implements SpriteHandler<SnakeSpriteType> {
 
 	#findSprite(type: SnakeSpriteType): SpriteCoordinates {
 		/*
-			the sprite sheet is 5x4 :
+			the sprite sheet is 6x4 :
 			
-			0  1  2  3  4
-			5  6  7  8  9
-			10 11 12 13 14
-			15 16 17 18 19
+			0  1  2  3  4  5
+			6  7  8  9  10 11
+			12 13 14 15 16 17
+			18 19 20 21 22 23
 		*/
-		const x = type % 5;
-		const y = Math.floor(type / 5);
+		const x = type % 6;
+		const y = Math.floor(type / 6);
 		
 		return { x, y };
 	}
