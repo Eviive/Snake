@@ -12,7 +12,6 @@ export class Game {
 	#bgCtx: CanvasRenderingContext2D;
 	#fgCtx: CanvasRenderingContext2D;
 
-	#levelId: number;
 	#level: LevelFile;
 	
 	#frame?: number;
@@ -31,11 +30,12 @@ export class Game {
 	#levelEvents: EventConfig[] = []; // need to be removed after the level stops
 	
 	onGameReady: () => void;
+	onGameWin: () => void;
 	onGameOver: (score: number, goal?: number) => void;
 	
-	constructor(levelId: number, level: LevelFile, sprite: SnakeSprite, onGameReady: () => void, onGameOver: (score: number, goal?: number) => void) {
+	private constructor(level: LevelFile, sprite: SnakeSprite, onGameReady: () => void, onGameWin: () => void, onGameOver: (score: number, goal?: number) => void) {
 		if (!Game.#isBuilding) {
-			throw new Error("Snake can only be built using the builder method");
+			throw new Error("Game can only be built using the builder method");
 		}
 		
 		const bgCanvas = document.querySelector<HTMLCanvasElement>("canvas#background-canvas");
@@ -55,10 +55,10 @@ export class Game {
 		this.#bgCtx = bgCtx,
 		this.#fgCtx = fgCtx;
 
-		this.#levelId = levelId;
 		this.#level = level;
 		this.#sprite = sprite;
 		this.onGameReady = onGameReady;
+		this.onGameWin = onGameWin;
 		this.onGameOver = onGameOver;
 
 		this.#resize();
@@ -78,7 +78,7 @@ export class Game {
 		this.onGameReady();
 	}
 
-	static async builder(levelId: number, onGameReady: () => void, onGameOver: (score: number, goal?: number) => void) {
+	static async builder(levelId: number, onGameReady: () => void, onGameWin: () => void, onGameOver: (score: number, goal?: number) => void) {
 		Game.#isBuilding = true;
 		try {
 			const res = await Promise.all([
@@ -92,7 +92,7 @@ export class Game {
 			
 			const level = module.default as LevelFile;
 			
-			return new this(levelId, level, sprite, onGameReady, onGameOver);
+			return new this(level, sprite, onGameReady, onGameWin, onGameOver);
 		} catch (e) {
 			console.error(e);
 			throw new Error(`Couldn't build the level ${levelId}`, { cause: e });
@@ -314,20 +314,24 @@ export class Game {
 		}
 		
 		if (this.#isOutOfBounds(newX, newY)) {
-			this.#gameOver();
+			this.#gameFinished();
 			return false;
 		}
 
 		let tile = this.#map[newY][newX];
 		
 		if (tile === Tile.Wall) {
-			this.#gameOver();
+			this.#gameFinished();
 			return false;
 		}
 
 		let tail: Snake | undefined;
 		if (tile === Tile.Food) {
 			this.#score++;
+			if (this.#score >= this.#level.goal) {
+				this.#gameFinished(true);
+				return false;
+			}
 			this.#generateFood();
 		} else {
 			tail = Snake.removeLast();
@@ -341,7 +345,7 @@ export class Game {
 				Snake.addPart(tail.coordinates, tail.direction);
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
-			this.#gameOver();
+			this.#gameFinished();
 			return false;
 		}
 
@@ -452,7 +456,7 @@ export class Game {
 		}
 	}
 
-	#gameOver() {
+	#gameFinished(wonGame: boolean = false) {
 		for (const { target, type, handler } of this.#levelEvents) {
 			target.removeEventListener(type, handler);
 		}
@@ -462,14 +466,18 @@ export class Game {
 			cancelAnimationFrame(this.#frame);
 		}
 		
-		this.onGameOver?.(this.#score, this.#level?.goal);
+		if (wonGame) {
+			this.onGameWin();
+		} else {
+			this.onGameOver(this.#score, this.#level.goal);
+		}
 	}
 
 	close() {
 		for (const { target, type, handler } of [...this.#gameEvents, ...this.#levelEvents]) {
 			target.removeEventListener(type, handler);
 		}
-		this.#gameOver();
+		this.#gameFinished();
 		Snake.reset();
 	}
 	

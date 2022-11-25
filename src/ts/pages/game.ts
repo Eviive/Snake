@@ -33,6 +33,15 @@ export const game = (level: number) => {
 			});
 		};
 		
+		const onGameWin = () => {
+			popupUnmount = showPopup(root, {
+				title: "You win!",
+				message: "Press any key to go back to home.",
+				button: "Home",
+				handler: () => window.location.hash = ""
+			});
+		};
+		
 		const onGameOver = (score: number, goal?: number) => {
 			popupUnmount = showPopup(root, {
 				title: "Game over",
@@ -42,7 +51,7 @@ export const game = (level: number) => {
 			});
 		};
 
-		snake = await Game.builder(level, onGameReady, onGameOver);
+		snake = await Game.builder(level, onGameReady, onGameWin, onGameOver);
 	};
 
 	const onUnmount = () => {
