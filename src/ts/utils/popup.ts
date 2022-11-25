@@ -37,51 +37,50 @@ export const showPopup = (root: Element, config: PopupConfig) => {
 
 		const popup = popupClone.querySelector(".popup");
 		
+		if (!popup) {
+			throw new Error("Popup not found");
+		}
+		
 		root.appendChild(popupClone);
 		
-		popup?.animate([
+		const animation = popup.animate([
 			{ opacity: 0 },
 			{ opacity: 1 }
 		], {
 			duration: 300,
 			easing: "ease",
 			fill: "forwards"
-		}).addEventListener("finish", () => {
+		})
+		
+		animation.onfinish = () => {
 			const popupEvent = (e: Event) => {
 				cleanupEvents();
 				
-				popup.animate([
-					{ opacity: 1 },
-					{ opacity: 0 }
-				], {
-					duration: 300,
-					easing: "ease",
-					fill: "forwards"
-				}).addEventListener("finish", () => {
+				animation.reverse();
+				
+				animation.onfinish = () => {
 					popup.remove();
 					
 					setTimeout(() => {
 						config.handler(e);
 					}, 250);
-				});
+				};
 			};
 			
 			events.push({
 				target: button,
 				type: "click",
 				handler: popupEvent
-			});
-			
-			events.push({
+			}, {
 				target: window,
 				type: "keydown",
 				handler: popupEvent
 			});
 
 			for (const { target, type, handler } of events) {
-				target.addEventListener(type, handler);
+				target.addEventListener(type, handler, { once: true });
 			}
-		});
+		};
 	}
 
 	return cleanupEvents;

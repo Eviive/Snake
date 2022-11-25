@@ -477,7 +477,11 @@ export class Game {
 		for (const { target, type, handler } of [...this.#gameEvents, ...this.#levelEvents]) {
 			target.removeEventListener(type, handler);
 		}
-		this.#gameFinished();
+		this.#gameEvents = [];
+		this.#levelEvents = [];
+		if (this.#frame) {
+			cancelAnimationFrame(this.#frame);
+		}
 		Snake.reset();
 	}
 	
