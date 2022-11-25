@@ -10,13 +10,8 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background-color: hsla(0deg, 0%, 0%, 0.5);
-	transition: opacity .3s ease;
-	animation: popup .3s ease;
-
-	&.popup-hidden {
-		opacity: 0;
-	}
+	background-color: hsla(0deg, 0%, 0%, .5);
+	opacity: 0;
 	
 	.popup-content {
 		padding: 2em;
@@ -37,29 +32,19 @@
 		}
 	
 		.popup-button {
-			padding: 0.5em 1em;
-			color: white;
-			background-color: hsl(48deg, 89%, 50%);
+			padding: .5em 1em;
+			color: hsl(var(--secondary-1));
+			background-color: hsl(var(--accent-1));
 			border-radius: 7px;
 		}
-	}
-
-}
-
-@keyframes popup {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: 1;
 	}
 }
 
 @keyframes popup-content {
-	0% {
+	from {
 		scale: 0;
 	}
-	100% {
+	to {
 		scale: 1;
 	}
 }
