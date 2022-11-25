@@ -1,5 +1,6 @@
 import { Snake } from "../snake/Snake.js";
 import { Square } from "../shapes/index.js";
+import { EventConfig } from "../types/event.js";
 import { Coordinates, Direction, GameMap, LevelFile, SnakeSpriteType, Tile } from "../types/game.js";
 import { create2DArray } from "../utils/array.js";
 import { SnakeSprite } from "./SnakeSprite.js";
@@ -11,6 +12,7 @@ export class Game {
 	#bgCtx: CanvasRenderingContext2D;
 	#fgCtx: CanvasRenderingContext2D;
 
+	#levelId: number;
 	#level: LevelFile;
 	
 	#frame?: number;
@@ -25,9 +27,13 @@ export class Game {
 	#direction: Direction = Direction.Up;
 	#treated: boolean = true;
 
-	onGameOver?: (score: number, goal?: number) => void;
+	#gameEvents: EventConfig[] = []; // need to be removed after leaving the game
+	#levelEvents: EventConfig[] = []; // need to be removed after the level stops
 	
-	constructor(level: LevelFile, sprite: SnakeSprite) {
+	onGameReady: () => void;
+	onGameOver: (score: number, goal?: number) => void;
+	
+	constructor(levelId: number, level: LevelFile, sprite: SnakeSprite, onGameReady: () => void, onGameOver: (score: number, goal?: number) => void) {
 		if (!Game.#isBuilding) {
 			throw new Error("Snake can only be built using the builder method");
 		}
@@ -49,20 +55,30 @@ export class Game {
 		this.#bgCtx = bgCtx,
 		this.#fgCtx = fgCtx;
 
+		this.#levelId = levelId;
 		this.#level = level;
 		this.#sprite = sprite;
+		this.onGameReady = onGameReady;
+		this.onGameOver = onGameOver;
 
 		this.#resize();
 		const resizeHandler = () => {
 			this.#resize();
 			this.#drawMap();
 		};
-		window.addEventListener("resize", resizeHandler);
+
+		this.#addEventListener("game", {
+			target: window,
+			type: "resize",
+			handler: resizeHandler
+		});
 
 		this.#init();
+
+		this.onGameReady();
 	}
 
-	static async builder(levelId: number) {
+	static async builder(levelId: number, onGameReady: () => void, onGameOver: (score: number, goal?: number) => void) {
 		Game.#isBuilding = true;
 		try {
 			const res = await Promise.all([
@@ -76,7 +92,7 @@ export class Game {
 			
 			const level = module.default as LevelFile;
 			
-			return new this(level, sprite);
+			return new this(levelId, level, sprite, onGameReady, onGameOver);
 		} catch (e) {
 			console.error(e);
 			throw new Error(`Couldn't build the level ${levelId}`, { cause: e });
@@ -87,39 +103,7 @@ export class Game {
 
 	#init() {
 		this.#createLevel();
-
-		const keydownHandler = (e: KeyboardEvent) => {
-			if (this.#treated === false) {
-				return;
-			}
-			let newDirection: Direction | undefined;
-			switch (e.key) {
-				case "ArrowUp":
-				case "z":
-					newDirection = Direction.Up;
-					break;
-				
-				case "ArrowRight":
-				case "d":
-					newDirection = Direction.Right;
-					break;
-
-				case "ArrowDown":
-				case "s":
-					newDirection = Direction.Down;
-					break;
-
-				case "ArrowLeft":
-				case "q":
-					newDirection = Direction.Left;
-					break;
-			}
-			if (newDirection && Math.abs(newDirection) !== this.#direction) {
-				this.#direction = newDirection;
-				this.#treated = false;
-			}
-		};
-		window.addEventListener("keydown", keydownHandler);
+		this.#drawMap();
 	}
 
 	#createLevel() {
@@ -218,6 +202,55 @@ export class Game {
 		}
 	}
 
+	#addEventListener(scope: "game" | "level", config: EventConfig) {
+		config.target.addEventListener(config.type, config.handler);
+		if (scope === "game") {
+			this.#gameEvents.push(config);
+		} else {
+			this.#levelEvents.push(config);
+		}
+	}
+	
+	#addDirectionEvent() {
+		const keydownHandler = (e: Event) => {
+			if (this.#treated === false || !(e instanceof KeyboardEvent)) {
+				return;
+			}
+			let newDirection: Direction | undefined;
+			switch (e.key) {
+				case "ArrowUp":
+				case "z":
+					newDirection = Direction.Up;
+					break;
+				
+				case "ArrowRight":
+				case "d":
+					newDirection = Direction.Right;
+					break;
+
+				case "ArrowDown":
+				case "s":
+					newDirection = Direction.Down;
+					break;
+
+				case "ArrowLeft":
+				case "q":
+					newDirection = Direction.Left;
+					break;
+			}
+			if (newDirection && Math.abs(newDirection) !== this.#direction) {
+				this.#direction = newDirection;
+				this.#treated = false;
+			}
+		};
+
+		this.#addEventListener("level", {
+			target: window,
+			type: "keydown",
+			handler: keydownHandler
+		});
+	}
+	
 	#getRandomEmptyTile() {
 		const { dimensions: [width, height] } = this.#level;
 		let tile: Coordinates;
@@ -281,14 +314,14 @@ export class Game {
 		}
 		
 		if (this.#isOutOfBounds(newX, newY)) {
-			this.gameOver();
+			this.#gameOver();
 			return false;
 		}
 
 		let tile = this.#map[newY][newX];
 		
 		if (tile === Tile.Wall) {
-			this.gameOver();
+			this.#gameOver();
 			return false;
 		}
 
@@ -308,7 +341,7 @@ export class Game {
 				Snake.addPart(tail.coordinates, tail.direction);
 				this.#map[tail.coordinates[1]][tail.coordinates[0]] = Tile.SnakeBody;
 			}
-			this.gameOver();
+			this.#gameOver();
 			return false;
 		}
 
@@ -419,15 +452,24 @@ export class Game {
 		}
 	}
 
-	gameOver() { // TODO: do a real cleanup, remove all the events
+	#gameOver() {
+		for (const { target, type, handler } of this.#levelEvents) {
+			target.removeEventListener(type, handler);
+		}
+		this.#levelEvents = [];
+
 		if (this.#frame) {
 			cancelAnimationFrame(this.#frame);
 		}
+		
 		this.onGameOver?.(this.#score, this.#level?.goal);
 	}
 
 	close() {
-		this.gameOver();
+		for (const { target, type, handler } of [...this.#gameEvents, ...this.#levelEvents]) {
+			target.removeEventListener(type, handler);
+		}
+		this.#gameOver();
 		Snake.reset();
 	}
 	
@@ -443,6 +485,7 @@ export class Game {
 	}
 	
 	run() {
+		this.#addDirectionEvent();
 		requestAnimationFrame(time => this.#render(time));
 	}
 
