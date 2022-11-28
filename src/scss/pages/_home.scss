@@ -36,9 +36,9 @@
 
 	.settings-button {
 		position: absolute;
-		bottom: 1em;
-		right: 1em;
-		@include size(2.5em);
+		bottom: 1.5em;
+		right: 1.5em;
+		@include size(2em);
 		transition: scale .3s ease;
 
 		&:active {
@@ -54,7 +54,7 @@
 		li {
 			display: flex;
 			align-items: center;
-			gap: 1em;
+			gap: 1ch;
 			padding: 1em 0;
 		}
 	}

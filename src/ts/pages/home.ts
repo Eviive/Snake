@@ -40,7 +40,7 @@ export const home = () => {
 
 				const settingsLabel = document.createElement("label");
 				settingsLabel.className = "settings-label";
-				settingsLabel.textContent = "Smooth movement";
+				settingsLabel.textContent = "Smooth movement :";
 
 				const settingsInput = document.createElement("input");
 				settingsInput.className = "settings-input";
