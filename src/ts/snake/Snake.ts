@@ -3,12 +3,16 @@ import { Coordinates, Direction, SnakePartType, SnakeSpriteType } from "../types
 
 export class Snake {
 	
+	static #isBuilding = false;
 	static #parts: Snake[] = [];
 	
 	#coordinates: Coordinates;
 	#direction: Direction;
 	
 	private constructor(coordinates: Coordinates, direction: Direction) {
+		if (!Snake.#isBuilding) {
+			throw new Error("Snake can only be built using the addPart method");
+		}
 		this.#coordinates = coordinates;
 		this.#direction = direction;
 	}
@@ -34,7 +38,9 @@ export class Snake {
 	}
 
 	static addPart(coordinates: Coordinates, direction: Direction, unshift: boolean = false): number {
+		Snake.#isBuilding = true;
 		const part = new this(coordinates, direction);
+		Snake.#isBuilding = false;
 		
 		return unshift
 			? this.#parts.unshift(part)

@@ -1,5 +1,13 @@
 export interface CallbackFunctions {
 	onMount?: (root: Element, page: DocumentFragment) => void;
-	afterMount?: () => void;
+	afterMount?: (root: Element) => void;
 	onUnmount?: () => void;
+}
+
+export interface PopupConfig {
+	title: string;
+	message: string;
+	content?: DocumentFragment;
+	button: string;
+	handler: (e: Event) => void;
 }
