@@ -1,7 +1,7 @@
 import { Snake } from "../snake/Snake.js";
 import { Square } from "../shapes/index.js";
 import { EventConfig } from "../types/event.js";
-import { Coordinates, Direction, GameMap, LevelFile, SnakeSpriteType, Tile } from "../types/game.js";
+import { Coordinates, Direction, GameMap, GameSettings, LevelFile, SnakeSpriteType, Tile } from "../types/game.js";
 import { create2DArray } from "../utils/array.js";
 import { SnakeSprite } from "./SnakeSprite.js";
 
@@ -18,10 +18,13 @@ export class Game {
 	#then?: DOMHighResTimeStamp;
 	#now?: DOMHighResTimeStamp;
 	#elapsed: DOMHighResTimeStamp = 0;
-
+	
 	#map: GameMap = [];
 	#score: number = 0;
 	#sprite: SnakeSprite;
+	#settings: GameSettings = {
+		smoothMovement: true
+	};
 
 	#direction: Direction = Direction.Up;
 	#treated: boolean = true;
@@ -199,6 +202,20 @@ export class Game {
 		for (const { canvas } of [this.#bgCtx, this.#fgCtx]) {
 			canvas.width = canvasWidth;
 			canvas.height = canvasHeight;
+		}
+	}
+
+	#loadSettings() {
+		const settings = localStorage.getItem("settings");
+
+		if (settings) {
+			try {
+				const parsed = JSON.parse(settings);
+				this.#settings = parsed;
+			} catch (e) {
+				console.error(e);
+				console.error("Error while parsing settings");
+			}
 		}
 	}
 
@@ -425,9 +442,12 @@ export class Game {
 		}
 		this.#fgCtx.clearRect(0, 0, this.#fgCtx.canvas.width, this.#fgCtx.canvas.height);
 
-		// advancement pourcentage of the frame (between 0 and 1)
-		const delta = Math.min(1, this.#elapsed / this.#level.delay) - 1; // smooth animation
-		// const delta = 0; // no animation
+		let delta;
+		if (this.#settings?.smoothMovement) {
+			delta = Math.min(1, this.#elapsed / this.#level.delay) - 1;
+		} else {
+			delta = 0;
+		}
 		
 		this.#drawMap(delta, iterating);
 
@@ -497,6 +517,7 @@ export class Game {
 	}
 	
 	run() {
+		this.#loadSettings();
 		this.#addDirectionEvent();
 		requestAnimationFrame(time => this.#render(time));
 	}

@@ -1,7 +1,7 @@
 import { EventConfig } from "../types/event";
 import { PopupConfig } from "../types/router.js";
 
-export const showPopup = (root: Element, config: PopupConfig) => {
+export const showPopup = (root: Element, config: PopupConfig, keydown: boolean = true) => {
 
 	const popupTemplate = document.querySelector<HTMLTemplateElement>("template#popup-template");
 
@@ -41,6 +41,10 @@ export const showPopup = (root: Element, config: PopupConfig) => {
 			throw new Error("Popup not found");
 		}
 		
+		if (config.content) {
+			popup.firstElementChild?.insertBefore(config.content, button);
+		}
+		
 		root.appendChild(popupClone);
 		
 		const animation = popup.animate([
@@ -71,11 +75,16 @@ export const showPopup = (root: Element, config: PopupConfig) => {
 				target: button,
 				type: "click",
 				handler: popupEvent
-			}, {
-				target: window,
-				type: "keydown",
-				handler: popupEvent
 			});
+
+			if (keydown) {
+				events.push({
+						target: window,
+						type: "keydown",
+						handler: popupEvent
+					}
+				);
+			}
 
 			for (const { target, type, handler } of events) {
 				target.addEventListener(type, handler, { once: true });

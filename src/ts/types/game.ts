@@ -56,3 +56,7 @@ export enum SnakePartType {
 	Body = 1,
 	Tail = 2
 }
+
+export interface GameSettings {
+	smoothMovement?: boolean;
+}

@@ -7,6 +7,7 @@ export interface CallbackFunctions {
 export interface PopupConfig {
 	title: string;
 	message: string;
+	content?: DocumentFragment;
 	button: string;
 	handler: (e: Event) => void;
 }
