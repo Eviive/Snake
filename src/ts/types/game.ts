@@ -31,11 +31,6 @@ export enum Direction {
 	6  7  8  9  10 11
 	12 13 14 15 16 17
 	18 19 20 21 22 23
-
-	0  1  2  3  4
-	5  6  7  8  9
-	10 11 12 13 14
-	15 16 17 18 19
 */
 export enum SnakeSpriteType {
 	HeadUp = 3,
@@ -56,7 +51,8 @@ export enum SnakeSpriteType {
 	TailRight = 21,
 	TailDown = 15,
 	TailLeft = 16,
-	Food = 18
+	Food = 18,
+	Wall = 20
 }
 
 export enum SnakePartType {
