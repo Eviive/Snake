@@ -6,6 +6,7 @@ export interface CallbackFunctions {
 
 export interface PopupConfig {
 	title: string;
+	homeLink?: boolean;
 	message: string;
 	content?: DocumentFragment;
 	button: string;

@@ -11,9 +11,15 @@ export const showPopup = (root: Element, config: PopupConfig, keydown: boolean =
 	
 	const popupClone = popupTemplate.content.cloneNode(true) as DocumentFragment;
 	
-	const title = popupClone.querySelector(".popup-title");
+	const title = popupClone.querySelector(".popup-title h2");
 	if (title) {
 		title.textContent = config.title;
+	}
+
+	if (!config.homeLink) {
+		const homeLink = popupClone.querySelector(".popup-title a");
+
+		homeLink?.remove();
 	}
 	
 	const message = popupClone.querySelector(".popup-message");
