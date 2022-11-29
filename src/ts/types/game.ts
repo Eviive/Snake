@@ -3,6 +3,7 @@ export type Coordinates = [number, number];
 export interface LevelFile {
 	dimensions: Coordinates;
 	delay: number;
+	goal: number;
 	walls: Coordinates[];
 	snake: Coordinates[];
 }
@@ -59,4 +60,8 @@ export enum SnakePartType {
 	Head = 0,
 	Body = 1,
 	Tail = 2
+}
+
+export interface GameSettings {
+	smoothMovement?: boolean;
 }

@@ -31,6 +31,7 @@ html {
 		--primary-2: 0deg, 0%, 14%;
 		--secondary-1: 0deg, 0%, 95%;
 		--secondary-2: 0deg, 0%, 71%;
+		--accent-1: 347deg, 84%, 50%;
 		
 		min-height: 100vh;
 		min-height: 100dvh;
@@ -56,4 +57,25 @@ html {
 			gap: 2em;
 		}
 	}
+}
+
+::-webkit-scrollbar {
+	@include size(.5em);
+}
+
+::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+
+::-webkit-scrollbar-corner {
+	background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: hsl(0, 0%, 30%);
+	border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: hsl(0, 0%, 40%);
 }
