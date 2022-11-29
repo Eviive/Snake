@@ -90,25 +90,25 @@ export class Snake {
 		return [x, y];
 	}
 
-	#drawPart(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, x: number, y: number, width: number, height: number, partType: SnakePartType): void {		
+	#drawPart(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, x: number, y: number, width: number, height: number, partType: SnakePartType, dead: boolean): void {		
 		let spriteType;
 		
 		if (partType === SnakePartType.Head) {
 			switch (this.#direction) {
 				case Direction.Up:
-					spriteType = SnakeSpriteType.HeadUp;
+					spriteType = dead ? SnakeSpriteType.HeadDeadUp : SnakeSpriteType.HeadUp;
 					break;
 				
 				case Direction.Right:
-					spriteType = SnakeSpriteType.HeadRight;
+					spriteType = dead ? SnakeSpriteType.HeadDeadRight : SnakeSpriteType.HeadRight;
 					break;
 
 				case Direction.Down:
-					spriteType = SnakeSpriteType.HeadDown;
+					spriteType = dead ? SnakeSpriteType.HeadDeadDown : SnakeSpriteType.HeadDown;
 					break;
 
 				case Direction.Left:
-					spriteType = SnakeSpriteType.HeadLeft;
+					spriteType = dead ? SnakeSpriteType.HeadDeadLeft : SnakeSpriteType.HeadLeft;
 					break;
 			
 				default:
@@ -116,34 +116,27 @@ export class Snake {
 			}
 		} else if (partType === SnakePartType.Body) {
 			const previousDirection = this.#getPreviousPart().direction;
-			const thisDirection = this.#direction;
 
-			if ((previousDirection === Direction.Up && thisDirection === Direction.Up) || (previousDirection === Direction.Down && thisDirection === Direction.Down)) {
-				
+			if ((previousDirection === Direction.Up && this.#direction === Direction.Up) || (previousDirection === Direction.Down && this.#direction === Direction.Down)) {
 				spriteType = SnakeSpriteType.BodyVertical;
 
-			} else if ((previousDirection === Direction.Left && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Right)) {
-				
+			} else if ((previousDirection === Direction.Left && this.#direction === Direction.Left) || (previousDirection === Direction.Right && this.#direction === Direction.Right)) {
 				spriteType = SnakeSpriteType.BodyHorizontal;
 
-			} else if ((previousDirection === Direction.Up && thisDirection === Direction.Right) || (previousDirection === Direction.Left && thisDirection === Direction.Down)) {
-				
+			} else if ((previousDirection === Direction.Up && this.#direction === Direction.Right) || (previousDirection === Direction.Left && this.#direction === Direction.Down)) {
 				spriteType = SnakeSpriteType.BodyTopLeft;
 
-			} else if ((previousDirection === Direction.Up && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Down)) {
-				
+			} else if ((previousDirection === Direction.Up && this.#direction === Direction.Left) || (previousDirection === Direction.Right && this.#direction === Direction.Down)) {
 				spriteType = SnakeSpriteType.BodyTopRight;
 
-			} else if ((previousDirection === Direction.Down && thisDirection === Direction.Left) || (previousDirection === Direction.Right && thisDirection === Direction.Up)) {
-				
+			} else if ((previousDirection === Direction.Down && this.#direction === Direction.Left) || (previousDirection === Direction.Right && this.#direction === Direction.Up)) {
 				spriteType = SnakeSpriteType.BodyBottomRight;
 
-			} else if ((previousDirection === Direction.Down && thisDirection === Direction.Right) || (previousDirection === Direction.Left && thisDirection === Direction.Up)) {
-				
+			} else if ((previousDirection === Direction.Down && this.#direction === Direction.Right) || (previousDirection === Direction.Left && this.#direction === Direction.Up)) {
 				spriteType = SnakeSpriteType.BodyBottomLeft;
 
 			} else {
-				throw new Error(`Unknown corner directions: ${previousDirection} and ${thisDirection}`);
+				throw new Error(`Unknown corner directions: ${previousDirection} and ${this.#direction}`);
 			}
 			
 			
@@ -181,13 +174,13 @@ export class Snake {
 		return Snake.#parts[Snake.#parts.indexOf(this) - 1];
 	}
 
-	draw(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, width: number, height: number, delta: number): void {
+	draw(ctx: CanvasRenderingContext2D, sprite: SnakeSprite, width: number, height: number, delta: number, dead: boolean): void {
 		let [x, y] = this.#adjustCoordinates(this.#coordinates, delta, this.#direction);
 		
 		x = x * width;
 		y = y * height;
 		
-		this.#drawPart(ctx, sprite, x, y, width, height, this.#getType());
+		this.#drawPart(ctx, sprite, x, y, width, height, this.#getType(), dead);
 	}
 
 }

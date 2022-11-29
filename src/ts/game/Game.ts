@@ -378,7 +378,7 @@ export class Game {
 		return true;
 	}
 
-	#drawMap(delta: number = 0, iterating: boolean = true) {
+	#drawMap(delta: number = 0, iterating: boolean = true, dead: boolean = false) {
 		const { dimensions: [width, height] } = this.#level;
 		
 		const cellWidth = this.#bgCtx.canvas.width / width;
@@ -397,7 +397,12 @@ export class Game {
 				switch (cell) {
 					case Tile.Wall:
 						if (iterating) {
-							new Square(x * cellWidth, y * cellHeight, "gray", cellWidth).draw(this.#bgCtx);
+							this.#sprite.drawSprite(this.#bgCtx, SnakeSpriteType.Wall, {
+								x: x * cellWidth,
+								y: y * cellHeight,
+								width: cellWidth,
+								height: cellHeight
+							});
 						}
 						break;
 
@@ -418,7 +423,7 @@ export class Game {
 							throw new Error("Snake part not found");
 						}
 
-						part.draw(this.#fgCtx, this.#sprite, cellWidth, cellHeight, delta);
+						part.draw(this.#fgCtx, this.#sprite, cellWidth, cellHeight, delta, dead);
 						break;
 				}
 			}
@@ -471,7 +476,9 @@ export class Game {
 
 		this.#then = this.#now;
 		
-		if (!gameOver) {
+		if (gameOver) {
+			this.#drawMap(delta, false, true);
+		} else {
 			this.#frame = requestAnimationFrame(time => this.#render(time));
 		}
 	}
