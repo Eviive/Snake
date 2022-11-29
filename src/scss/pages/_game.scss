@@ -1,4 +1,4 @@
-@use "../abstracts";
+@use "../abstracts" as *;
 
 #root.game {
 	padding: 2em 4%;
@@ -19,6 +19,9 @@
 
 		canvas {
 			position: absolute;
+			border: 2px solid hsl(var(--primary-2));
+			border-radius: 8px;
+			@include box-shadow;
 		}
 	}
 }
