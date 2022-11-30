@@ -21,6 +21,10 @@ a, button {
 	cursor: pointer;
 }
 
+input[type="checkbox"] {
+	accent-color: hsl(var(--accent-1));
+}
+
 html {
 	min-width: 350px;
 	font-family: $font-sans;
@@ -32,6 +36,7 @@ html {
 		--secondary-1: 0deg, 0%, 95%;
 		--secondary-2: 0deg, 0%, 71%;
 		--accent-1: 347deg, 84%, 50%;
+		--hyperlink: 219deg, 87%, 58%;
 		
 		min-height: 100vh;
 		min-height: 100dvh;

@@ -3,12 +3,11 @@ export type Coordinates = [number, number];
 export interface LevelFile {
 	dimensions: Coordinates;
 	delay: number;
-	goal: number;
 	walls: Coordinates[];
 	snake: Coordinates[];
 }
 
-export type GameMap = number[][];
+export type GameMap = Tile[][];
 
 export enum Tile {
 	Empty = 0,
@@ -65,3 +64,7 @@ export enum SnakePartType {
 export interface GameSettings {
 	smoothMovement?: boolean;
 }
+
+export const defaultGameSettings: GameSettings = {
+	smoothMovement: false
+};
