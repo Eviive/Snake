@@ -1,0 +1,28 @@
+@use "../abstracts" as *;
+@use "../components/popup";
+
+#root.game {
+	padding: 2em 4%;
+	max-width: 100%;
+	
+	.title {
+		padding: .25em 0;
+		font-size: 2.5em;
+	}
+
+	.game-wrapper {
+		position: relative;
+		flex-grow: 1;
+		max-width: 100%;
+		width: 100%;
+		display: grid;
+		place-items: center;
+
+		canvas {
+			position: absolute;
+			border: 2px solid hsl(var(--primary-2));
+			border-radius: 8px;
+			@include box-shadow;
+		}
+	}
+}

@@ -5,9 +5,13 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "START /B tsc -w & START /B sass -w src/scss:public/css"
+		"start": "START /B npx tsc -w & START /B npx sass -w src/scss:public/css"
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC"
+	"license": "ISC",
+	"devDependencies": {
+		"sass": "^1.56.1",
+		"typescript": "^4.9.3"
+	}
 }

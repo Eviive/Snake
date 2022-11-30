@@ -1,0 +1,69 @@
+@use "../abstracts" as *;
+
+#root.home {
+	padding: 2em;
+	
+	.title {
+		padding: .5em 0;
+		font-size: 3em;
+	}
+
+	.description {
+		padding: 1em 0;
+		max-width: 60ch;
+		line-height: 1.75em;
+		text-align: center;
+	}
+	
+	.levels {
+		padding: 1em 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		gap: 2em;
+		font-size: 1.5em;
+		
+		li {
+			display: flex;
+
+			a {
+				padding: 1em 2em;
+				font-weight: bold;
+				text-transform: uppercase;
+				border-radius: 7px;
+				background-color: hsl(var(--primary-2));
+				transition: scale .3s ease;
+
+				&:active {
+					scale: .95;
+				}
+			}
+		}
+	}
+
+	.settings-button {
+		position: fixed;
+		bottom: 1.5em;
+		right: 1.5em;
+		@include size(2em);
+		transition: scale .3s ease;
+
+		&:active {
+			scale: .95;
+		}
+
+		img {
+			@include size;
+		}
+	}
+
+	.settings-wrapper {
+		li {
+			display: flex;
+			align-items: center;
+			gap: 1ch;
+			padding: 1em 0;
+		}
+	}
+}
