@@ -68,14 +68,14 @@ export class Game {
 			this.#resize();
 			this.#drawMap();
 		};
-
+		
+		this.#init();
+		
 		this.#addEventListener("game", {
 			target: window,
 			type: "resize",
 			handler: resizeHandler
 		});
-
-		this.#init();
 
 		this.onGameReady();
 	}
@@ -392,7 +392,7 @@ export class Game {
 				const cell = this.#map[y][x];
 				
 				if (iterating) {
-					const color = (x + y) % 2 === 0 ? "#494351" : "#443e4c";
+					const color = (x + y) % 2 === 0 ? "hsl(266deg, 9%, 29%)" : "hsl(266deg, 10%, 27%)";
 					new Square(x * cellWidth, y * cellHeight, color, cellWidth).draw(this.#bgCtx);
 				}
 

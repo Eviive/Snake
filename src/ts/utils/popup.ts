@@ -85,11 +85,10 @@ export const showPopup = (root: Element, config: PopupConfig, keydown: boolean =
 
 			if (keydown) {
 				events.push({
-						target: window,
-						type: "keydown",
-						handler: popupEvent
-					}
-				);
+					target: window,
+					type: "keydown",
+					handler: popupEvent
+				});
 			}
 
 			for (const { target, type, handler } of events) {
