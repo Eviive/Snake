@@ -1,3 +1,4 @@
+import { defaultGameSettings } from "../types/game.js";
 import { showPopup } from "../utils/popup.js";
 import { displayPage } from "./router.js";
 
@@ -20,9 +21,7 @@ export const home = () => {
 			if (savedSettings) {
 				settings = JSON.parse(savedSettings);
 			} else {
-				settings = {
-					smoothMovement: true
-				};
+				settings = defaultGameSettings as { [key: string]: string | boolean };
 			}
 			
 			const saveSettings = () => {
@@ -62,6 +61,7 @@ export const home = () => {
 				
 				popupUnmount = showPopup(root, {
 					title: "Settings",
+					homeLink: false,
 					message: "Customize your settings",
 					content: settingsFragment,
 					button: "Save",

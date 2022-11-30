@@ -1,7 +1,7 @@
 import { Snake } from "../snake/Snake.js";
 import { Square } from "../shapes/index.js";
 import { EventConfig } from "../types/event.js";
-import { Coordinates, Direction, GameMap, GameSettings, LevelFile, SnakeSpriteType, Tile } from "../types/game.js";
+import { Coordinates, defaultGameSettings, Direction, GameMap, GameSettings, LevelFile, SnakeSpriteType, Tile } from "../types/game.js";
 import { create2DArray } from "../utils/array.js";
 import { SnakeSprite } from "./SnakeSprite.js";
 
@@ -22,9 +22,7 @@ export class Game {
 	#map: GameMap = [];
 	#score: number = 0;
 	#sprite: SnakeSprite;
-	#settings: GameSettings = {
-		smoothMovement: true
-	};
+	#settings: GameSettings = defaultGameSettings;
 
 	#direction: Direction = Direction.Up;
 	#treated: boolean = true;

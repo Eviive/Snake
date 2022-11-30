@@ -65,3 +65,7 @@ export enum SnakePartType {
 export interface GameSettings {
 	smoothMovement?: boolean;
 }
+
+export const defaultGameSettings: GameSettings = {
+	smoothMovement: false
+};

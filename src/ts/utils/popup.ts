@@ -16,7 +16,7 @@ export const showPopup = (root: Element, config: PopupConfig, keydown: boolean =
 		title.textContent = config.title;
 	}
 
-	if (!config.homeLink) {
+	if (config.homeLink === false) {
 		const homeLink = popupClone.querySelector(".popup-title a");
 
 		homeLink?.remove();
