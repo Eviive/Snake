@@ -42,7 +42,7 @@ export const game = (level: number) => {
 			});
 		};
 		
-		const onGameOver = (score: number, goal?: number) => {
+		const onGameOver = (score: number, goal: number) => {
 			popupUnmount = showPopup(root, {
 				title: "Game over",
 				message: `You scored ${score} points${goal ? ` out of ${goal}` : ""}.`,

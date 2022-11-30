@@ -20,6 +20,7 @@ export class Game {
 	#elapsed: DOMHighResTimeStamp = 0;
 	
 	#map: GameMap = [];
+	#goal: number = 0;
 	#score: number = 0;
 	#sprite: SnakeSprite;
 	#settings: GameSettings = defaultGameSettings;
@@ -32,9 +33,9 @@ export class Game {
 	
 	onGameReady: () => void;
 	onGameWin: () => void;
-	onGameOver: (score: number, goal?: number) => void;
+	onGameOver: (score: number, goal: number) => void;
 	
-	private constructor(level: LevelFile, sprite: SnakeSprite, onGameReady: () => void, onGameWin: () => void, onGameOver: (score: number, goal?: number) => void) {
+	private constructor(level: LevelFile, sprite: SnakeSprite, onGameReady: () => void, onGameWin: () => void, onGameOver: (score: number, goal: number) => void) {
 		if (!Game.#isBuilding) {
 			throw new Error("Game can only be built using the builder method");
 		}
@@ -79,7 +80,7 @@ export class Game {
 		this.onGameReady();
 	}
 
-	static async builder(levelId: number, onGameReady: () => void, onGameWin: () => void, onGameOver: (score: number, goal?: number) => void) {
+	static async builder(levelId: number, onGameReady: () => void, onGameWin: () => void, onGameOver: (score: number, goal: number) => void) {
 		Game.#isBuilding = true;
 		try {
 			const res = await Promise.all([
@@ -172,7 +173,10 @@ export class Game {
 			Snake.addPart(snake[i], this.#direction);
 		}
 
+		this.#goal = this.#map.flat().filter(tile => tile === Tile.Empty).length;
+
 		this.#generateFood();
+		
 	}
 
 	#resize() {
@@ -343,7 +347,7 @@ export class Game {
 		let tail: Snake | undefined;
 		if (tile === Tile.Food) {
 			this.#score++;
-			if (this.#score >= this.#level.goal) {
+			if (this.#score >= this.#goal) {
 				this.#gameFinished(true);
 				return false;
 			}
@@ -454,7 +458,7 @@ export class Game {
 		
 		this.#drawMap(delta, iterating);
 
-		let gameOver = false;
+		let gameFinished = false;
 		
 		if (iterating) {
 			
@@ -469,14 +473,12 @@ export class Game {
 			this.#elapsed = 0;
 			this.#treated = true;
 			
-			gameOver = !this.#iterate(this.#direction);
+			gameFinished = !this.#iterate(this.#direction);
 		}
 
 		this.#then = this.#now;
 		
-		if (gameOver) {
-			this.#drawMap(delta, false, true);
-		} else {
+		if (!gameFinished) {
 			this.#frame = requestAnimationFrame(time => this.#render(time));
 		}
 	}
@@ -494,7 +496,8 @@ export class Game {
 		if (wonGame) {
 			this.onGameWin();
 		} else {
-			this.onGameOver(this.#score, this.#level.goal);
+			this.#drawMap(0, false, true);
+			this.onGameOver(this.#score, this.#goal);
 		}
 	}
 
