@@ -54,7 +54,7 @@ export class Game {
 			throw new Error("Couldn't get all the canvas' contexts");
 		}
 		
-		this.#bgCtx = bgCtx,
+		this.#bgCtx = bgCtx;
 		this.#fgCtx = fgCtx;
 
 		this.#level = level;
