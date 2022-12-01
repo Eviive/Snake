@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="icon" href="assets/images/favicon.png">
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Open+Sans:wght@400;700&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+
+	<link rel="stylesheet" href="css/style.css">
+	
+	<script src="js/index.js" type="module"></script>
+	
+	<title>Snake</title>
+</head>
+<body>
+	<div id="root"></div>
+	
+	<template id="home-template">
+		<h1 class="title">Snake</h1>
+		<p class="description">
+			Welcome to the <strong>Snake Game</strong>.
+			<br />
+			<br />
+			The goal is simple, fill in every empty tile with your snake.
+			But be careful, if you get out of the map, hit a wall or your own tail, you <strong>lose</strong>.
+			<br />
+			<br />
+			You can move your snake with either with the arrow keys or the ZQSD keys.
+			<br />
+			You can also enable the smooth movement option in the settings menu (experimental feature) to make the snake move smoothly.
+		</p>
+		<ol class="levels">
+			<li>
+				<a href="#level-1">Level 1</a>
+			</li>
+			<li>
+				<a href="#level-2">Level 2</a>
+			</li>
+			<li>
+				<a href="#level-3">Level 3</a>
+			</li>
+		</ol>
+		<button class="settings-button">
+			<img src="assets/images/settings.svg" alt="Settings">
+		</button>
+	</template>
+
+	<template id="level-template">
+		<h1 class="title"></h1>
+		<div class="game-wrapper">
+			<canvas id="background-canvas"></canvas>
+			<canvas id="foreground-canvas"></canvas>
+		</div>
+	</template>
+
+	<template id="popup-template">
+		<div class="popup">
+			<div class="popup-content">
+				<div class="popup-title">
+					<h2></h2>
+					<a href="#">Back to home</a>
+				</div>
+				<p class="popup-message"></p>
+				<button class="popup-button"></button>
+			</div>
+		</div>
+	</template>
+</body>
+</html>
