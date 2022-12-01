@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "START /B npx tsc -w & START /B npx sass -w src/scss:public/css"
+		"start": "START /B npx tsc -w & START /B npx sass -w src/scss:public/css",
+		"build": "npx tsc && npx sass src/scss:public/css"
 	},
 	"keywords": [],
 	"author": "",

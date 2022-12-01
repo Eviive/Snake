@@ -1,0 +1,19 @@
+name: Deploy Snake to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: NPM Clean install and Build
+        uses: eviive/actions/npm-ci-build@main
+        
+      - name: Deploy to GitHub Pages
+        uses: eviive/actions/pages@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          build_dir: public
