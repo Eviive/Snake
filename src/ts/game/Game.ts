@@ -85,7 +85,7 @@ export class Game {
 		try {
 			const promises = await Promise.all([
 				SnakeSprite.load("sprite-sheet.png", 64),
-				fetch(`../../assets/levels/level-${levelId}.json`)
+				fetch(`assets/levels/level-${levelId}.json`)
 			]);
 
 			const [sprite, res] = promises;
