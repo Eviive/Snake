@@ -83,16 +83,18 @@ export class Game {
 	static async builder(levelId: number, onGameReady: () => void, onGameWin: () => void, onGameOver: (score: number, goal: number) => void) {
 		Game.#isBuilding = true;
 		try {
-			const res = await Promise.all([
+			const promises = await Promise.all([
 				SnakeSprite.load("sprite-sheet.png", 64),
-				import(`../../assets/levels/level-${levelId}.json`, {
-					assert: { type: "json" }
-				})
+				fetch(`../../assets/levels/level-${levelId}.json`)
 			]);
 
-			const [sprite, module] = res;
+			const [sprite, res] = promises;
 			
-			const level = module.default as LevelFile;
+			if (!res.ok) {
+				throw new Error(`Couldn't load level ${levelId}`);
+			}
+			
+			const level: LevelFile = await res.json();
 			
 			return new this(level, sprite, onGameReady, onGameWin, onGameOver);
 		} catch (e) {
